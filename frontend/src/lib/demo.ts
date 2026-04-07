@@ -1,4 +1,5 @@
 import type { Order, QRPoint } from "@/types";
+import { estimateDistanceMeters, estimatePrice } from "@/lib/pricing";
 
 export const DEMO_QR_ID = "demo";
 export const DEMO_TOKEN = "demo-token";
@@ -34,19 +35,28 @@ export function createDemoOrder(input: {
   destinationLat?: number;
   destinationLon?: number;
   paymentMethod?: "cash" | "card";
+  tariff?: string;
 }): Order {
+  const destinationLat = input.destinationLat ?? 49.9528653;
+  const destinationLon = input.destinationLon ?? 82.6323419;
+  const tariff = input.tariff ?? "standard";
+  const distanceMeters = estimateDistanceMeters(
+    { latitude: DEMO_QR_POINT.latitude, longitude: DEMO_QR_POINT.longitude },
+    { latitude: destinationLat, longitude: destinationLon },
+  );
+
   return {
     id: Date.now(),
     status: "searching",
     pickup_address: DEMO_QR_POINT.address,
     pickup_lat: DEMO_QR_POINT.latitude,
     pickup_lon: DEMO_QR_POINT.longitude,
-    destination_address: input.destinationAddress ?? "ул. Сатпаева 90, Алматы",
-    destination_lat: input.destinationLat ?? 43.2365,
-    destination_lon: input.destinationLon ?? 76.9284,
-    tariff: "standard",
+    destination_address: input.destinationAddress ?? "Қазақстан көшесі, 76, Усть-Каменогорск",
+    destination_lat: destinationLat,
+    destination_lon: destinationLon,
+    tariff,
     payment_method: input.paymentMethod ?? "cash",
-    price_estimate: 1350,
+    price_estimate: estimatePrice(distanceMeters, tariff),
     driver: null,
     eta_minutes: 6,
     created_at: new Date().toISOString(),

@@ -1,6 +1,6 @@
 import asyncio
 import logging
-import random
+from math import atan2, cos, radians, sin, sqrt
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -33,7 +33,13 @@ class OrderService:
             destination_lon=data.destination_lon,
             tariff=data.tariff,
             payment_method=data.payment_method,
-            price_estimate=self._estimate_price(data.tariff),
+            price_estimate=self._estimate_price(
+                data.tariff,
+                qr_point.latitude,
+                qr_point.longitude,
+                data.destination_lat,
+                data.destination_lon,
+            ),
         )
 
         # Запускаем поиск водителя в фоне
@@ -58,6 +64,48 @@ class OrderService:
         logger.info("Driver assigned for order %s", order_id)
 
     @staticmethod
-    def _estimate_price(tariff: str) -> float:
-        base = {"economy": 500, "standard": 700, "comfort": 1000}.get(tariff, 700)
-        return round(base + random.uniform(-50, 100), 2)
+    def _estimate_price(
+        tariff: str,
+        pickup_lat: float,
+        pickup_lon: float,
+        destination_lat: float | None,
+        destination_lon: float | None,
+    ) -> float:
+        tariffs = {
+            "economy": {"base": 300, "per_km": 100, "minimum": 500},
+            "standard": {"base": 350, "per_km": 120, "minimum": 600},
+            "comfort": {"base": 500, "per_km": 150, "minimum": 800},
+        }
+        config = tariffs.get(tariff, tariffs["standard"])
+
+        if destination_lat is None or destination_lon is None:
+            return float(config["minimum"])
+
+        distance_meters = OrderService._distance_meters(
+            pickup_lat,
+            pickup_lon,
+            destination_lat,
+            destination_lon,
+        )
+        price = config["base"] + (distance_meters / 1000) * config["per_km"]
+        return float(round(max(price, config["minimum"]), 2))
+
+    @staticmethod
+    def _distance_meters(
+        pickup_lat: float,
+        pickup_lon: float,
+        destination_lat: float,
+        destination_lon: float,
+    ) -> float:
+        earth_radius = 6_371_000
+        lat1 = radians(pickup_lat)
+        lat2 = radians(destination_lat)
+        delta_lat = radians(destination_lat - pickup_lat)
+        delta_lon = radians(destination_lon - pickup_lon)
+
+        a = (
+            sin(delta_lat / 2) ** 2
+            + cos(lat1) * cos(lat2) * sin(delta_lon / 2) ** 2
+        )
+        c = 2 * atan2(sqrt(a), sqrt(1 - a))
+        return earth_radius * c

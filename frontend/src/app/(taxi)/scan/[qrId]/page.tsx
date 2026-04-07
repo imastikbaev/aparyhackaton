@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { CardWalletIcon, CashWalletIcon, RouteBadgeIcon } from "@/components/ui/AparuIcons";
 import { buildRoute, geocodeAddress, getQRPoint, reverseGeocode } from "@/lib/api";
 import { searchLocalAddresses } from "@/lib/localAddressSearch";
+import { estimatePrice } from "@/lib/pricing";
 import { formatDistanceKm, formatDurationMin } from "@/lib/utils";
 import { useOrderStore } from "@/store/orderStore";
 import type { GeocodeResult, PaymentMethod, QRPoint, RouteResponse } from "@/types";
@@ -381,7 +382,7 @@ export default function ScanPage() {
             </div>
             <div className="flex-1 rounded-[22px] bg-[var(--aparu-orange-soft)] px-3 py-2.5 text-center">
               <p className="text-xs text-[var(--aparu-orange)]">Стоимость</p>
-              <p className="font-bold text-[var(--aparu-orange)]">~{Math.round(route.distance / 1000 * 120 + 350)} ₸</p>
+              <p className="font-bold text-[var(--aparu-orange)]">~{estimatePrice(route.distance)} ₸</p>
             </div>
           </div>
         )}
