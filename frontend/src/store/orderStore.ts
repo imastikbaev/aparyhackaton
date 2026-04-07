@@ -12,6 +12,7 @@ interface OrderState {
   setToken: (token: string, phone: string) => void;
   setQRPoint: (point: QRPoint) => void;
   setOrder: (order: Order) => void;
+  patchOrder: (patch: Partial<Order>) => void;
   updateOrderStatus: (status: Order["status"], etaMinutes?: number) => void;
   reset: () => void;
 }
@@ -28,6 +29,10 @@ export const useOrderStore = create<OrderState>()(
       setToken: (token, phone) => set({ token, phone }),
       setQRPoint: (point) => set({ currentQRPoint: point }),
       setOrder: (order) => set({ currentOrder: order }),
+      patchOrder: (patch) =>
+        set((state) => ({
+          currentOrder: state.currentOrder ? { ...state.currentOrder, ...patch } : null,
+        })),
 
       updateOrderStatus: (status, etaMinutes) =>
         set((state) => ({

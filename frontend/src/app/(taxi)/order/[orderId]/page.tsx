@@ -3,11 +3,14 @@
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Car, Flag, MapPinned } from "lucide-react";
 import { DriverCard } from "@/components/order/DriverCard";
 import { OrderStatusBar } from "@/components/order/OrderStatus";
 import { TripInfo } from "@/components/order/TripInfo";
+import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useOrderStatus } from "@/hooks/useOrderStatus";
+import { isDemoToken } from "@/lib/demo";
 import { useOrderStore } from "@/store/orderStore";
 
 const LeafletMap = dynamic(
@@ -18,7 +21,7 @@ const LeafletMap = dynamic(
 export default function OrderPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
-  const { currentOrder } = useOrderStore();
+  const { currentOrder, patchOrder, token, updateOrderStatus } = useOrderStore();
 
   useOrderStatus(Number(orderId));
 
@@ -36,6 +39,36 @@ export default function OrderPage() {
       </div>
     );
   }
+
+  const isDemo = isDemoToken(token);
+
+  const demoAction =
+    currentOrder.status === "driver_assigned"
+      ? {
+          title: "Водитель уже едет к вам",
+          description: "Посмотри интерфейс ожидания, затем можно переключить сценарий на прибытие водителя.",
+          label: "Отметить прибытие водителя",
+          icon: Car,
+          onClick: () => updateOrderStatus("driver_arrived", 0),
+        }
+      : currentOrder.status === "driver_arrived"
+        ? {
+            title: "Водитель прибыл",
+            description: "Теперь можно посмотреть экран посадки и перейти к поездке.",
+            label: "Начать поездку",
+            icon: MapPinned,
+            onClick: () => patchOrder({ status: "trip_started", eta_minutes: 12 }),
+          }
+        : currentOrder.status === "trip_started"
+          ? {
+              title: "Поездка уже идёт",
+              description: "Посмотри интерфейс во время поездки, затем можно завершить заказ и перейти к отзыву.",
+              label: "Завершить поездку",
+              icon: Flag,
+              onClick: () => patchOrder({ status: "trip_completed", eta_minutes: 0 }),
+            }
+          : null;
+  const DemoActionIcon = demoAction?.icon;
 
   const markers = [
     { lat: currentOrder.pickup_lat, lng: currentOrder.pickup_lon, kind: "route-a" as const },
@@ -67,6 +100,23 @@ export default function OrderPage() {
 
         {currentOrder.driver && (
           <DriverCard driver={currentOrder.driver} etaMinutes={currentOrder.eta_minutes} />
+        )}
+
+        {isDemo && demoAction && DemoActionIcon && (
+          <div className="aparu-card p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[var(--aparu-orange-soft)]">
+                <DemoActionIcon size={20} color="#FF6B00" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-[var(--aparu-ink)]">{demoAction.title}</p>
+                <p className="mt-1 text-sm text-[var(--aparu-muted)]">{demoAction.description}</p>
+              </div>
+            </div>
+            <Button className="mt-4" size="lg" onClick={demoAction.onClick}>
+              {demoAction.label}
+            </Button>
+          </div>
         )}
 
         <TripInfo order={currentOrder} />

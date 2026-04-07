@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { CheckCircle, Download, Star } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
@@ -11,6 +12,7 @@ import { useOrderStore } from "@/store/orderStore";
 export default function CompletePage() {
   const { currentQRPoint, currentOrder, reset } = useOrderStore();
   const router = useRouter();
+  const [rating, setRating] = useState(0);
 
   const handleReorder = () => {
     reset();
@@ -49,11 +51,16 @@ export default function CompletePage() {
             </p>
             <div className="flex justify-center gap-2">
               {[1, 2, 3, 4, 5].map((n) => (
-                <button key={n}>
-                  <Star size={32} color="#FF6B00" fill={n <= 5 ? "#FF6B00" : "none"} />
+                <button key={n} onClick={() => setRating(n)}>
+                  <Star size={32} color="#FF6B00" fill={n <= rating ? "#FF6B00" : "none"} />
                 </button>
               ))}
             </div>
+            {rating > 0 && (
+              <p className="mt-3 text-center text-sm text-[var(--aparu-muted)]">
+                Спасибо за отзыв. Твоя оценка: <span className="font-semibold text-[var(--aparu-ink)]">{rating}/5</span>
+              </p>
+            )}
           </div>
         )}
 

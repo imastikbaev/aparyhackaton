@@ -18,15 +18,9 @@ export function useOrderStatus(orderId: number | null) {
       const assignedTimer = setTimeout(() => {
         setOrder(getDemoAssignedOrder(currentOrder));
       }, 2500);
-      const arrivedTimer = setTimeout(() => updateOrderStatus("driver_arrived", 1), 5500);
-      const startedTimer = setTimeout(() => updateOrderStatus("trip_started"), 8500);
-      const completedTimer = setTimeout(() => updateOrderStatus("trip_completed"), 12000);
 
       return () => {
         clearTimeout(assignedTimer);
-        clearTimeout(arrivedTimer);
-        clearTimeout(startedTimer);
-        clearTimeout(completedTimer);
       };
     }
 
