@@ -8,6 +8,7 @@ import type {
   RouteResponse,
   TokenResponse,
 } from "@/types";
+import { createDemoOrder, DEMO_QR_POINT, isDemoQrId, isDemoToken } from "@/lib/demo";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 
@@ -55,12 +56,22 @@ export const verifyOTP = (phone: string, code: string) =>
 
 // ─── QR ──────────────────────────────────────────────────────────────────────
 
-export const getQRPoint = (qrId: string) => request<QRPoint>(`/qr/${qrId}`);
+export const getQRPoint = (qrId: string) =>
+  isDemoQrId(qrId) ? Promise.resolve(DEMO_QR_POINT) : request<QRPoint>(`/qr/${qrId}`);
 
 // ─── Orders ──────────────────────────────────────────────────────────────────
 
 export const createOrder = (data: OrderCreate, token: string) =>
-  request<Order>("/orders", { method: "POST", body: JSON.stringify(data), token });
+  isDemoToken(token) || isDemoQrId(data.qr_point_id)
+    ? Promise.resolve(
+        createDemoOrder({
+          destinationAddress: data.destination_address,
+          destinationLat: data.destination_lat,
+          destinationLon: data.destination_lon,
+          paymentMethod: data.payment_method,
+        }),
+      )
+    : request<Order>("/orders", { method: "POST", body: JSON.stringify(data), token });
 
 export const getOrder = (orderId: number, token: string) =>
   request<Order>(`/orders/${orderId}`, { token });

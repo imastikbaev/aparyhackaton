@@ -3,15 +3,32 @@
 import { useEffect, useRef } from "react";
 
 import { getOrderWsUrl } from "@/lib/api";
+import { getDemoAssignedOrder, isDemoToken } from "@/lib/demo";
 import { useOrderStore } from "@/store/orderStore";
 import type { WSStatusEvent } from "@/types";
 
 export function useOrderStatus(orderId: number | null) {
-  const { updateOrderStatus } = useOrderStore();
+  const { currentOrder, token, setOrder, updateOrderStatus } = useOrderStore();
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     if (!orderId) return;
+
+    if (isDemoToken(token) && currentOrder?.id === orderId) {
+      const assignedTimer = setTimeout(() => {
+        setOrder(getDemoAssignedOrder(currentOrder));
+      }, 2500);
+      const arrivedTimer = setTimeout(() => updateOrderStatus("driver_arrived", 1), 5500);
+      const startedTimer = setTimeout(() => updateOrderStatus("trip_started"), 8500);
+      const completedTimer = setTimeout(() => updateOrderStatus("trip_completed"), 12000);
+
+      return () => {
+        clearTimeout(assignedTimer);
+        clearTimeout(arrivedTimer);
+        clearTimeout(startedTimer);
+        clearTimeout(completedTimer);
+      };
+    }
 
     const ws = new WebSocket(getOrderWsUrl(orderId));
     wsRef.current = ws;
@@ -39,5 +56,5 @@ export function useOrderStatus(orderId: number | null) {
       ws.close();
       wsRef.current = null;
     };
-  }, [orderId, updateOrderStatus]);
+  }, [currentOrder, orderId, setOrder, token, updateOrderStatus]);
 }

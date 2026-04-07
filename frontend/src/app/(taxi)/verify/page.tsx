@@ -7,14 +7,16 @@ import { Phone, ShieldCheck } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { isDemoQrId } from "@/lib/demo";
 import { useAuth } from "@/hooks/useAuth";
 
 function VerifyForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get("next") ?? "/";
+  const demoMode = nextPath.includes("/scan/") && isDemoQrId(nextPath.split("/scan/")[1]?.split("?")[0] ?? "");
 
-  const { step, phone, loading, error, devCode, requestOTP, confirmOTP } = useAuth();
+  const { step, phone, loading, error, devCode, requestOTP, confirmOTP } = useAuth(demoMode);
   const [phoneInput, setPhoneInput] = useState("+7");
   const [codeDigits, setCodeDigits] = useState(["", "", "", ""]);
 
@@ -62,6 +64,11 @@ function VerifyForm() {
             <p className="mt-1 text-[14px] text-[#757575]">
               Отправим SMS с кодом подтверждения
             </p>
+            {demoMode && (
+              <p className="mt-2 text-xs text-[#FF6B00]">
+                Демо-режим: можно использовать тестовый код без живого backend
+              </p>
+            )}
           </div>
 
           <form onSubmit={handlePhoneSubmit} className="flex flex-col gap-3">

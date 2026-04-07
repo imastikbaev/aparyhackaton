@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { sendOTP, verifyOTP } from "@/lib/api";
+import { DEMO_OTP_CODE, DEMO_TOKEN } from "@/lib/demo";
 import { useOrderStore } from "@/store/orderStore";
 
 type Step = "phone" | "otp" | "done";
 
-export function useAuth() {
+export function useAuth(demoMode = false) {
   const { setToken } = useOrderStore();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
@@ -18,6 +19,12 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
+      if (demoMode) {
+        setPhone(phoneNumber);
+        setDevCode(DEMO_OTP_CODE);
+        setStep("otp");
+        return;
+      }
       const res = await sendOTP(phoneNumber);
       setPhone(phoneNumber);
       // В mock-режиме бэкенд возвращает код прямо в ответе
@@ -34,6 +41,15 @@ export function useAuth() {
     setLoading(true);
     setError(null);
     try {
+      if (demoMode) {
+        if (code !== DEMO_OTP_CODE) {
+          setError("Для демо используйте код 1111");
+          return false;
+        }
+        setToken(DEMO_TOKEN, phone);
+        setStep("done");
+        return true;
+      }
       const data = await verifyOTP(phone, code);
       setToken(data.access_token, phone);
       setStep("done");
