@@ -2,9 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { MapPin, Navigation } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
+import { RouteBadgeIcon } from "@/components/ui/AparuIcons";
 import { Button } from "@/components/ui/Button";
 import { createOrder } from "@/lib/api";
 import { useOrderStore } from "@/store/orderStore";
@@ -47,28 +47,24 @@ export default function ConfirmPage() {
       <div className="flex flex-col gap-4 px-4 py-6">
 
         {/* Маршрут */}
-        <div className="bg-white rounded-3xl border border-[#F0F0F0] p-4 space-y-3">
+        <div className="aparu-card space-y-3 p-4">
           <div className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-full bg-[#FF6B00] flex items-center justify-center flex-shrink-0">
-              <MapPin size={15} color="white" />
-            </div>
+            <RouteBadgeIcon label="A" tone="orange" />
             <div>
-              <p className="text-xs text-[#AAAAAA]">Откуда</p>
-              <p className="font-semibold text-[#1A1A1A]">{currentQRPoint.name}</p>
-              <p className="text-sm text-[#757575]">{currentQRPoint.address}</p>
+              <p className="text-xs text-[var(--aparu-orange)]">Откуда</p>
+              <p className="font-semibold text-[var(--aparu-ink)]">{currentQRPoint.name}</p>
+              <p className="text-sm text-[var(--aparu-muted)]">{currentQRPoint.address}</p>
             </div>
           </div>
 
           {pendingOrder?.destination_address && (
             <>
-              <div className="ml-4 border-l-2 border-dashed border-[#EBEBEB] h-3" />
+              <div className="ml-5 h-3 border-l-2 border-dashed border-[#d9e1e4]" />
               <div className="flex items-start gap-3">
-                <div className="h-8 w-8 rounded-full bg-[#252525] flex items-center justify-center flex-shrink-0">
-                  <Navigation size={15} color="white" />
-                </div>
+                <RouteBadgeIcon label="B" tone="teal" />
                 <div>
-                  <p className="text-xs text-[#AAAAAA]">Куда</p>
-                  <p className="font-semibold text-[#1A1A1A]">{pendingOrder.destination_address}</p>
+                  <p className="text-xs text-[var(--aparu-teal)]">Куда</p>
+                  <p className="font-semibold text-[var(--aparu-ink)]">{pendingOrder.destination_address}</p>
                 </div>
               </div>
             </>

@@ -15,7 +15,7 @@ const DEMO_DRIVER = {
 
 export const DEMO_QR_POINT: QRPoint = {
   id: DEMO_QR_ID,
-  name: "APARU Demo Point",
+  name: "Oskemen Hub",
   address: "ул. Казахстан 59/1, Oskemen Hub, Усть-Каменогорск",
   latitude: 49.949607,
   longitude: 82.627735,

@@ -10,18 +10,18 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ variant = "primary", size = "md", isLoading, className, children, disabled, ...props }, ref) => {
     const base =
-      "inline-flex items-center justify-center font-semibold rounded-2xl transition-all active:scale-[0.97] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
+      "inline-flex items-center justify-center font-semibold rounded-[22px] transition-all active:scale-[0.985] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed";
 
     const variants = {
-      primary: "bg-[#FF6B00] text-white shadow-sm hover:bg-[#e05f00]",
-      secondary: "bg-white text-[#1A1A1A] border border-[#EBEBEB] hover:bg-gray-50",
-      ghost: "text-[#FF6B00] hover:bg-orange-50",
+      primary: "bg-[var(--aparu-orange)] text-white shadow-[0_16px_28px_rgba(255,107,0,0.24)] hover:brightness-95",
+      secondary: "bg-white text-[var(--aparu-ink)] border border-[var(--aparu-line)] shadow-[0_12px_24px_rgba(24,39,75,0.08)] hover:bg-[#fbfcfc]",
+      ghost: "text-[var(--aparu-orange)] hover:bg-[var(--aparu-orange-soft)]",
     };
 
     const sizes = {
-      sm: "h-9 px-4 text-sm gap-1.5",
+      sm: "h-10 px-4 text-sm gap-1.5",
       md: "h-12 px-5 text-[15px] gap-2",
-      lg: "h-14 px-6 text-[16px] gap-2 w-full",
+      lg: "h-[58px] px-6 text-[16px] gap-2 w-full",
     };
 
     return (

@@ -1,7 +1,7 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { ChevronLeftIcon } from "@/components/ui/AparuIcons";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -14,34 +14,34 @@ export function AppShell({ children, showBack, title, transparentHeader }: AppSh
   const router = useRouter();
 
   return (
-    <div className="flex flex-col min-h-screen max-w-[430px] mx-auto bg-white relative">
+    <div className="flex min-h-screen max-w-[430px] mx-auto flex-col relative bg-transparent">
       {/* Header */}
       <header
         className={[
-          "sticky top-0 z-20 flex items-center gap-3 px-4 h-14",
+          "sticky top-0 z-20 flex items-center gap-3 px-4 h-16",
           transparentHeader
             ? "absolute inset-x-0 bg-transparent"
-            : "bg-white border-b border-[#F0F0F0]",
+            : "aparu-header-glass border-b border-white/70",
         ].join(" ")}
       >
         {showBack && (
           <button
             onClick={() => router.back()}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm"
+            className="flex h-11 w-11 items-center justify-center rounded-[20px] bg-white shadow-[0_10px_24px_rgba(24,39,75,0.12)]"
           >
-            <ArrowLeft size={20} color="#1A1A1A" />
+            <ChevronLeftIcon size={20} className="text-[#2A3037]" />
           </button>
         )}
 
         {/* Logo или заголовок */}
         {title ? (
-          <span className="flex-1 text-center font-semibold text-[#1A1A1A] text-[16px]">
+          <span className="flex-1 text-center text-[16px] font-semibold text-[var(--aparu-ink)]">
             {title}
           </span>
         ) : (
-          <div className="flex items-center">
+          <div className="flex items-center rounded-[18px] bg-white/90 px-3 py-2 shadow-[0_8px_24px_rgba(24,39,75,0.1)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/aparu/logo.svg" alt="APARU" className="h-6 w-auto" />
+            <img src="/aparu/logo.svg" alt="APARU" className="h-5 w-auto" />
           </div>
         )}
 

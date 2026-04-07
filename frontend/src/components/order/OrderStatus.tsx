@@ -11,17 +11,17 @@ export function OrderStatusBar({ status }: { status: TOrderStatus }) {
   const steps = ORDER_STATUS_STEPS;
 
   return (
-    <div className="bg-white rounded-3xl p-4 shadow-sm border border-[#F0F0F0]">
+    <div className="aparu-card p-4">
       {/* Текущий статус */}
       <div className="flex items-center gap-3 mb-4">
-        <div className="h-10 w-10 rounded-full bg-[#FF6B00]/10 flex items-center justify-center">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--aparu-orange-soft)]">
           {(() => {
             const Icon = STEP_ICONS[Math.max(0, currentIndex)] ?? Car;
             return <Icon size={20} color="#FF6B00" />;
           })()}
         </div>
         <div>
-          <p className="font-semibold text-[#1A1A1A]">{ORDER_STATUS_LABELS[status]}</p>
+          <p className="font-semibold text-[var(--aparu-ink)]">{ORDER_STATUS_LABELS[status]}</p>
         </div>
       </div>
 
@@ -31,8 +31,8 @@ export function OrderStatusBar({ status }: { status: TOrderStatus }) {
           <div
             key={i}
             className={[
-              "flex-1 h-1.5 rounded-full transition-all duration-500",
-              i <= currentIndex ? "bg-[#FF6B00]" : "bg-[#EBEBEB]",
+              "h-2 flex-1 rounded-full transition-all duration-500",
+              i <= currentIndex ? "bg-[var(--aparu-teal)]" : "bg-[#e3eaed]",
             ].join(" ")}
           />
         ))}

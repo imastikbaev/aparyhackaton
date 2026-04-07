@@ -57,11 +57,11 @@ function VerifyForm() {
       {step === "phone" ? (
         <>
           <div className="text-center">
-            <div className="h-16 w-16 bg-[#FFF5EE] rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--aparu-orange-soft)]">
               <Phone size={28} color="#FF6B00" />
             </div>
-            <h1 className="text-[22px] font-bold text-[#1A1A1A]">Введите номер</h1>
-            <p className="mt-1 text-[14px] text-[#757575]">
+            <h1 className="text-[22px] font-bold text-[var(--aparu-ink)]">Введите номер</h1>
+            <p className="mt-1 text-[14px] text-[var(--aparu-muted)]">
               Отправим SMS с кодом подтверждения
             </p>
             {demoMode && (
@@ -76,7 +76,7 @@ function VerifyForm() {
               type="tel"
               value={phoneInput}
               onChange={(e) => setPhoneInput(e.target.value)}
-              className="h-14 w-full rounded-2xl bg-[#F5F5F5] px-4 text-[18px] font-semibold text-[#1A1A1A] placeholder:text-[#AAAAAA] tracking-wide outline-none focus:bg-white focus:ring-2 focus:ring-[#FF6B00]/30"
+              className="h-14 w-full rounded-[22px] border border-transparent bg-[var(--aparu-surface-soft)] px-4 text-[18px] font-semibold tracking-wide text-[var(--aparu-ink)] placeholder:text-[#a3afb5] outline-none focus:bg-white focus:ring-2 focus:ring-[var(--aparu-orange)]/25"
               inputMode="tel"
               autoFocus
             />
@@ -89,19 +89,19 @@ function VerifyForm() {
       ) : (
         <>
           <div className="text-center">
-            <div className="h-16 w-16 bg-[#FFF5EE] rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--aparu-orange-soft)]">
               <ShieldCheck size={28} color="#FF6B00" />
             </div>
-            <h1 className="text-[22px] font-bold text-[#1A1A1A]">Код из SMS</h1>
-            <p className="mt-1 text-[14px] text-[#757575]">
+            <h1 className="text-[22px] font-bold text-[var(--aparu-ink)]">Код из SMS</h1>
+            <p className="mt-1 text-[14px] text-[var(--aparu-muted)]">
               Отправили на{" "}
-              <span className="font-semibold text-[#1A1A1A]">{phone}</span>
+              <span className="font-semibold text-[var(--aparu-ink)]">{phone}</span>
             </p>
           </div>
 
           {/* Dev-подсказка с кодом */}
           {devCode && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-center">
+            <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-center">
               <p className="text-xs text-amber-600 font-medium">Тестовый режим — ваш код:</p>
               <p className="text-2xl font-bold text-amber-800 tracking-[0.3em] mt-0.5">
                 {devCode}
@@ -123,7 +123,7 @@ function VerifyForm() {
                   onChange={(e) => handleDigit(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
                   autoFocus={i === 0}
-                  className="h-16 w-16 rounded-2xl bg-[#F5F5F5] text-center text-[28px] font-bold text-[#1A1A1A] outline-none focus:bg-white focus:ring-2 focus:ring-[#FF6B00]/40 transition-all"
+                  className="h-16 w-16 rounded-[22px] bg-[var(--aparu-surface-soft)] text-center text-[28px] font-bold text-[var(--aparu-ink)] outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[var(--aparu-orange)]/35"
                 />
               ))}
             </div>
@@ -142,7 +142,7 @@ function VerifyForm() {
             <button
               type="button"
               onClick={() => requestOTP(phone)}
-              className="text-sm text-[#757575] text-center hover:text-[#FF6B00] transition-colors"
+              className="text-center text-sm text-[var(--aparu-muted)] transition-colors hover:text-[var(--aparu-orange)]"
             >
               Отправить код повторно
             </button>
