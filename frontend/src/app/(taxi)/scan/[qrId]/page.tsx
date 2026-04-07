@@ -3,17 +3,17 @@
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Crosshair, Navigation, X } from "lucide-react";
+import { Building2, Crosshair, Hotel, Navigation, Pill, Soup, Stethoscope, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { CardWalletIcon, CashWalletIcon, RouteBadgeIcon } from "@/components/ui/AparuIcons";
 import { buildRoute, geocodeAddress, getQRPoint, reverseGeocode } from "@/lib/api";
-import { searchLocalAddresses } from "@/lib/localAddressSearch";
+import { getNearbyPlaceRecommendations, searchLocalAddresses } from "@/lib/localAddressSearch";
 import { estimatePrice } from "@/lib/pricing";
 import { formatDistanceKm, formatDurationMin } from "@/lib/utils";
 import { useOrderStore } from "@/store/orderStore";
-import type { GeocodeResult, PaymentMethod, QRPoint, RouteResponse } from "@/types";
+import type { GeocodeResult, NearbyPlace, NearbyPlaceCategory, PaymentMethod, QRPoint, RouteResponse } from "@/types";
 
 const LeafletMap = dynamic(
   () => import("@/components/map/LeafletMap").then((m) => m.LeafletMap),
@@ -35,7 +35,10 @@ export default function ScanPage() {
   const [selectedDest, setSelectedDest] = useState<GeocodeResult | null>(null);
   const [route, setRoute] = useState<RouteResponse | null>(null);
   const [routeLoading, setRouteLoading] = useState(false);
+  const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [payment, setPayment] = useState<PaymentMethod>("cash");
+  const [tariff, setTariff] = useState<"economy" | "standard" | "comfort">("standard");
+  const [comment, setComment] = useState("");
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [selectionMode, setSelectionMode] = useState<"pickup" | "destination" | null>(null);
   const [pickingLoading, setPickingLoading] = useState(false);
@@ -83,6 +86,13 @@ export default function ScanPage() {
       .catch(() => setError("QR-код не найден или недействителен"))
       .finally(() => setLoading(false));
   }, [qrId, setQRPoint]);
+
+  useEffect(() => {
+    if (!qrPoint) return;
+    getNearbyPlaceRecommendations(qrPoint.latitude, qrPoint.longitude, 6)
+      .then(setNearbyPlaces)
+      .catch(() => setNearbyPlaces([]));
+  }, [qrPoint]);
 
   // Поиск адреса назначения с debounce
   const handleDestInput = useCallback(
@@ -209,11 +219,29 @@ export default function ScanPage() {
             : destQuery.trim() || undefined,
           destination_lat: selectedDest?.latitude,
           destination_lon: selectedDest?.longitude,
+          tariff,
           payment_method: payment,
+          comment: comment.trim() || undefined,
         },
       });
       router.push(`/confirm?qr=${qrId}`);
     }
+  };
+
+  const nearbyIcons: Record<NearbyPlaceCategory, typeof Building2> = {
+    mall: Building2,
+    pharmacy: Pill,
+    hotel: Hotel,
+    hospital: Stethoscope,
+    cafe: Soup,
+  };
+
+  const nearbyLabels: Record<NearbyPlaceCategory, string> = {
+    mall: "ТЦ",
+    pharmacy: "Аптека",
+    hotel: "Отель",
+    hospital: "Больница",
+    cafe: "Кафе",
   };
 
   // Маркеры карты
@@ -363,6 +391,38 @@ export default function ScanPage() {
           )}
         </div>
 
+        {!destQuery && !selectionMode && nearbyPlaces.length > 0 && (
+          <div className="rounded-[22px] bg-[var(--aparu-surface-soft)] px-3 py-3">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-semibold text-[var(--aparu-ink)]">Рядом с точкой посадки</p>
+              <p className="text-[11px] text-[var(--aparu-muted)]">ТЦ, кафе, аптеки и другое</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {nearbyPlaces.map((place, index) => {
+                const Icon = nearbyIcons[place.category];
+                return (
+                  <button
+                    key={`${place.address}-${index}`}
+                    type="button"
+                    onClick={() => selectDest(place)}
+                    className="flex min-w-0 items-center gap-2 rounded-[18px] bg-white px-3 py-2 text-left shadow-[0_8px_16px_rgba(24,39,75,0.06)]"
+                  >
+                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[12px] bg-[var(--aparu-teal-soft)] text-[var(--aparu-teal)]">
+                      <Icon size={16} />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block truncate text-[13px] font-medium text-[var(--aparu-ink)]">{place.address}</span>
+                      <span className="block truncate text-[11px] text-[var(--aparu-muted)]">
+                        {nearbyLabels[place.category]} · {Math.max(1, Math.round(place.distanceMeters / 100) / 10)} км
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Инфо о маршруте */}
         {routeLoading && (
           <div className="flex items-center gap-2 px-1">
@@ -382,10 +442,33 @@ export default function ScanPage() {
             </div>
             <div className="flex-1 rounded-[22px] bg-[var(--aparu-orange-soft)] px-3 py-2.5 text-center">
               <p className="text-xs text-[var(--aparu-orange)]">Стоимость</p>
-              <p className="font-bold text-[var(--aparu-orange)]">~{estimatePrice(route.distance)} ₸</p>
+              <p className="font-bold text-[var(--aparu-orange)]">~{estimatePrice(route.distance, tariff)} ₸</p>
             </div>
           </div>
         )}
+
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { id: "economy", label: "Эконом", sub: "Дешевле" },
+            { id: "standard", label: "Стандарт", sub: "Оптимально" },
+            { id: "comfort", label: "Комфорт", sub: "Просторнее" },
+          ].map((option) => (
+            <button
+              key={option.id}
+              type="button"
+              onClick={() => setTariff(option.id as "economy" | "standard" | "comfort")}
+              className={[
+                "rounded-[22px] px-3 py-3 text-center transition-all",
+                tariff === option.id
+                  ? "bg-[var(--aparu-orange-soft)] text-[var(--aparu-orange)] shadow-[0_12px_24px_rgba(255,107,0,0.12)]"
+                  : "bg-[var(--aparu-surface-soft)] text-[var(--aparu-muted)]",
+              ].join(" ")}
+            >
+              <p className="text-sm font-semibold">{option.label}</p>
+              <p className="mt-0.5 text-[11px]">{option.sub}</p>
+            </button>
+          ))}
+        </div>
 
         {/* Способ оплаты */}
         <div className="flex gap-2">
@@ -413,6 +496,17 @@ export default function ScanPage() {
             <CardWalletIcon size={18} />
             Карта
           </button>
+        </div>
+
+        <div className="rounded-[24px] bg-[var(--aparu-surface-soft)] px-4 py-3">
+          <p className="text-xs font-medium text-[var(--aparu-muted)]">Комментарий к заказу</p>
+          <textarea
+            rows={3}
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            placeholder="Например: подъезд со стороны двора, буду в синей куртке"
+            className="mt-2 w-full resize-none bg-transparent text-[14px] text-[var(--aparu-ink)] placeholder:text-[#9ca8ae] outline-none"
+          />
         </div>
 
         {/* CTA */}

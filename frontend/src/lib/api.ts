@@ -70,6 +70,7 @@ export const createOrder = (data: OrderCreate, token: string) =>
           destinationLon: data.destination_lon,
           paymentMethod: data.payment_method,
           tariff: data.tariff,
+          comment: data.comment,
         }),
       )
     : request<Order>("/orders", { method: "POST", body: JSON.stringify(data), token });

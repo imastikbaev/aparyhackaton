@@ -42,6 +42,7 @@ export interface Order {
   destination_lon: number | null;
   tariff: string;
   payment_method: PaymentMethod;
+  comment?: string | null;
   price_estimate: number | null;
   driver: Driver | null;
   eta_minutes: number | null;
@@ -55,6 +56,7 @@ export interface OrderCreate {
   destination_lon?: number;
   tariff?: string;
   payment_method?: PaymentMethod;
+  comment?: string;
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -77,6 +79,13 @@ export interface GeocodeResult {
   latitude: number;
   longitude: number;
   type: "s" | "h" | "o" | "c";
+}
+
+export type NearbyPlaceCategory = "mall" | "pharmacy" | "hotel" | "hospital" | "cafe";
+
+export interface NearbyPlace extends GeocodeResult {
+  category: NearbyPlaceCategory;
+  distanceMeters: number;
 }
 
 export interface GeocodeResponse {

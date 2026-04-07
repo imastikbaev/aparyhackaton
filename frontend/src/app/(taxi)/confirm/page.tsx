@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { RouteBadgeIcon } from "@/components/ui/AparuIcons";
 import { Button } from "@/components/ui/Button";
 import { createOrder } from "@/lib/api";
+import { estimateDistanceMeters, estimatePrice } from "@/lib/pricing";
 import { useOrderStore } from "@/store/orderStore";
 
 export default function ConfirmPage() {
@@ -42,6 +43,15 @@ export default function ConfirmPage() {
 
   if (!currentQRPoint) return null;
 
+  const distanceMeters =
+    pendingOrder?.destination_lat != null && pendingOrder?.destination_lon != null
+      ? estimateDistanceMeters(
+          { latitude: currentQRPoint.latitude, longitude: currentQRPoint.longitude },
+          { latitude: pendingOrder.destination_lat, longitude: pendingOrder.destination_lon },
+        )
+      : null;
+  const estimatedPrice = distanceMeters != null ? estimatePrice(distanceMeters, pendingOrder?.tariff) : null;
+
   return (
     <AppShell showBack title="Подтверждение">
       <div className="flex flex-col gap-4 px-4 py-6">
@@ -68,6 +78,37 @@ export default function ConfirmPage() {
                 </div>
               </div>
             </>
+          )}
+        </div>
+
+        <div className="aparu-card grid grid-cols-2 gap-3 p-4">
+          <div>
+            <p className="text-xs text-[var(--aparu-muted)]">Тариф</p>
+            <p className="mt-1 font-semibold text-[var(--aparu-ink)]">
+              {pendingOrder?.tariff === "economy"
+                ? "Эконом"
+                : pendingOrder?.tariff === "comfort"
+                  ? "Комфорт"
+                  : "Стандарт"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-[var(--aparu-muted)]">Оплата</p>
+            <p className="mt-1 font-semibold text-[var(--aparu-ink)]">
+              {pendingOrder?.payment_method === "card" ? "Карта" : "Наличные"}
+            </p>
+          </div>
+          {estimatedPrice != null && (
+            <div className="col-span-2 rounded-[18px] bg-[var(--aparu-orange-soft)] px-3 py-3">
+              <p className="text-xs text-[var(--aparu-orange)]">Примерная стоимость</p>
+              <p className="mt-1 text-lg font-bold text-[var(--aparu-orange)]">~{estimatedPrice} ₸</p>
+            </div>
+          )}
+          {pendingOrder?.comment && (
+            <div className="col-span-2 rounded-[18px] bg-[var(--aparu-surface-soft)] px-3 py-3">
+              <p className="text-xs text-[var(--aparu-muted)]">Комментарий водителю</p>
+              <p className="mt-1 text-sm text-[var(--aparu-ink)]">{pendingOrder.comment}</p>
+            </div>
           )}
         </div>
 

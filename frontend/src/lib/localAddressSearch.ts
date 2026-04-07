@@ -1,4 +1,4 @@
-import type { GeocodeResult } from "@/types";
+import type { GeocodeResult, NearbyPlace, NearbyPlaceCategory } from "@/types";
 
 interface LocalAddressEntry {
   address: string;
@@ -47,6 +47,31 @@ function normalize(value: string): string {
 
 function distanceScore(latA: number, lonA: number, latB: number, lonB: number): number {
   return Math.hypot(latA - latB, lonA - lonB);
+}
+
+function distanceMeters(latA: number, lonA: number, latB: number, lonB: number): number {
+  const earthRadius = 6_371_000;
+  const dLat = ((latB - latA) * Math.PI) / 180;
+  const dLon = ((lonB - lonA) * Math.PI) / 180;
+  const lat1 = (latA * Math.PI) / 180;
+  const lat2 = (latB * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+
+  return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function classifyNearbyPlace(entry: LocalAddressEntry): NearbyPlaceCategory | null {
+  const haystack = normalize(`${entry.address} ${entry.additionalInfo}`);
+
+  if (/(mall|торгов|торгово-развлекатель|трц|тц|shopping|supermarket)/.test(haystack)) return "mall";
+  if (/(pharmacy|апте|pharm|фарма)/.test(haystack)) return "pharmacy";
+  if (/(hotel|гостин|отел|hostel)/.test(haystack)) return "hotel";
+  if (/(hospital|clinic|поликлиник|больниц|медицин|diagnostic|диагност|медцентр)/.test(haystack)) return "hospital";
+  if (/(cafe|coffee|restaurant|рест|кафе|столов|bar|lounge)/.test(haystack)) return "cafe";
+
+  return null;
 }
 
 export async function searchLocalAddresses(
@@ -103,4 +128,51 @@ export async function searchLocalAddresses(
     longitude: entry.longitude,
     type: entry.type,
   }));
+}
+
+export async function getNearbyPlaceRecommendations(
+  lat: number,
+  lon: number,
+  limit = 6,
+): Promise<NearbyPlace[]> {
+  const entries = await loadIndex();
+  const seen = new Set<string>();
+
+  const ranked = entries
+    .filter((entry) => entry.type === "o")
+    .map((entry) => {
+      const category = classifyNearbyPlace(entry);
+      if (!category) return null;
+
+      const key = normalize(`${entry.address}|${entry.additionalInfo}|${category}`);
+      if (seen.has(key)) return null;
+      seen.add(key);
+
+      return {
+        address: entry.address,
+        additionalInfo: entry.additionalInfo,
+        latitude: entry.latitude,
+        longitude: entry.longitude,
+        type: entry.type,
+        category,
+        distanceMeters: distanceMeters(lat, lon, entry.latitude, entry.longitude),
+      } satisfies NearbyPlace;
+    })
+    .filter((entry): entry is NearbyPlace => Boolean(entry))
+    .sort((a, b) => a.distanceMeters - b.distanceMeters);
+
+  const picked = new Set<NearbyPlaceCategory>();
+  const primary: NearbyPlace[] = [];
+  const secondary: NearbyPlace[] = [];
+
+  for (const item of ranked) {
+    if (!picked.has(item.category)) {
+      primary.push(item);
+      picked.add(item.category);
+      continue;
+    }
+    secondary.push(item);
+  }
+
+  return [...primary, ...secondary].slice(0, limit);
 }

@@ -36,6 +36,7 @@ export function createDemoOrder(input: {
   destinationLon?: number;
   paymentMethod?: "cash" | "card";
   tariff?: string;
+  comment?: string;
 }): Order {
   const destinationLat = input.destinationLat ?? 49.9528653;
   const destinationLon = input.destinationLon ?? 82.6323419;
@@ -56,6 +57,7 @@ export function createDemoOrder(input: {
     destination_lon: destinationLon,
     tariff,
     payment_method: input.paymentMethod ?? "cash",
+    comment: input.comment ?? null,
     price_estimate: estimatePrice(distanceMeters, tariff),
     driver: null,
     eta_minutes: 6,

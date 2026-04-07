@@ -57,6 +57,16 @@ export function TripInfo({ order }: { order: Order }) {
           )}
         </div>
       </div>
+
+      {order.comment && (
+        <>
+          <div className="h-px bg-[var(--aparu-line)]" />
+          <div className="rounded-[18px] bg-[var(--aparu-surface-soft)] px-3 py-3">
+            <p className="text-xs text-[var(--aparu-muted)]">Комментарий водителю</p>
+            <p className="mt-1 text-[14px] text-[var(--aparu-ink)]">{order.comment}</p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
