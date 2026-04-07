@@ -1,0 +1,31 @@
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# Database
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+aiosqlite==0.20.0
+alembic==1.14.0
+
+# Settings & validation
+pydantic==2.10.0
+pydantic-settings==2.6.1
+
+# Redis
+redis==5.2.0
+fakeredis[aioredis]>=2.20.0  # dev-режим без реального Redis
+
+# Auth
+python-jose[cryptography]==3.3.0
+
+# HTTP client (maps proxy + тесты)
+httpx==0.28.0
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+
+# SMS (опционально)
+twilio==9.3.4
