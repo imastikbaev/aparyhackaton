@@ -392,27 +392,29 @@ export default function ScanPage() {
         </div>
 
         {!destQuery && !selectionMode && nearbyPlaces.length > 0 && (
-          <div className="rounded-[22px] bg-[var(--aparu-surface-soft)] px-3 py-3">
+          <div className="rounded-[20px] bg-[var(--aparu-surface-soft)]/72 px-3 py-2.5">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-semibold text-[var(--aparu-ink)]">Рядом с точкой посадки</p>
-              <p className="text-[11px] text-[var(--aparu-muted)]">ТЦ, кафе, аптеки и другое</p>
+              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--aparu-muted)]">
+                Куда можно поехать рядом
+              </p>
+              <p className="text-[11px] text-[var(--aparu-muted)]">Подсказки</p>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {nearbyPlaces.map((place, index) => {
+            <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {nearbyPlaces.slice(0, 5).map((place, index) => {
                 const Icon = nearbyIcons[place.category];
                 return (
                   <button
                     key={`${place.address}-${index}`}
                     type="button"
                     onClick={() => selectDest(place)}
-                    className="flex min-w-0 items-center gap-2 rounded-[18px] bg-white px-3 py-2 text-left shadow-[0_8px_16px_rgba(24,39,75,0.06)]"
+                    className="flex w-[152px] flex-shrink-0 items-center gap-2 rounded-[18px] border border-white/70 bg-white/85 px-3 py-2 text-left shadow-[0_6px_14px_rgba(24,39,75,0.05)] backdrop-blur"
                   >
-                    <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[12px] bg-[var(--aparu-teal-soft)] text-[var(--aparu-teal)]">
-                      <Icon size={16} />
+                    <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[11px] bg-[var(--aparu-teal-soft)]/80 text-[var(--aparu-teal)]">
+                      <Icon size={15} />
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-[13px] font-medium text-[var(--aparu-ink)]">{place.address}</span>
-                      <span className="block truncate text-[11px] text-[var(--aparu-muted)]">
+                      <span className="block truncate text-[12px] font-medium text-[var(--aparu-ink)]">{place.address}</span>
+                      <span className="block truncate text-[10px] text-[var(--aparu-muted)]">
                         {nearbyLabels[place.category]} · {Math.max(1, Math.round(place.distanceMeters / 100) / 10)} км
                       </span>
                     </span>
