@@ -14,7 +14,11 @@ export function useOrderStatus(orderId: number | null) {
   useEffect(() => {
     if (!orderId) return;
 
-    if (isDemoToken(token) && currentOrder?.id === orderId) {
+    if (
+      isDemoToken(token) &&
+      currentOrder?.id === orderId &&
+      currentOrder.status === "searching"
+    ) {
       const assignedTimer = setTimeout(() => {
         setOrder(getDemoAssignedOrder(currentOrder));
       }, 2500);
