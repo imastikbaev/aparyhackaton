@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { Car, Flag, MapPinned } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Car, Flag, MapPinned, MessageCircleMore, Send, Share2 } from "lucide-react";
 import { DriverCard } from "@/components/order/DriverCard";
 import { OrderStatusBar } from "@/components/order/OrderStatus";
 import { TripInfo } from "@/components/order/TripInfo";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useOrderStatus } from "@/hooks/useOrderStatus";
 import { isDemoToken } from "@/lib/demo";
+import { createSharedTripPayload, getSharedTripState, getSharedTripUrl } from "@/lib/tripShare";
 import { useOrderStore } from "@/store/orderStore";
 
 const LeafletMap = dynamic(
@@ -22,6 +23,7 @@ export default function OrderPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
   const { currentOrder, patchOrder, token, updateOrderStatus } = useOrderStore();
+  const [shareState, setShareState] = useState<"idle" | "copied">("idle");
 
   useOrderStatus(Number(orderId));
 
@@ -41,6 +43,14 @@ export default function OrderPage() {
   }
 
   const isDemo = isDemoToken(token);
+  const sharePayload = useMemo(
+    () => (currentOrder ? createSharedTripPayload(currentOrder) : null),
+    [currentOrder],
+  );
+  const liveDemoState = useMemo(
+    () => (sharePayload ? getSharedTripState(sharePayload) : null),
+    [sharePayload],
+  );
 
   const demoAction =
     currentOrder.status === "driver_assigned"
@@ -75,10 +85,37 @@ export default function OrderPage() {
     ...(currentOrder.destination_lat && currentOrder.destination_lon
       ? [{ lat: currentOrder.destination_lat, lng: currentOrder.destination_lon, kind: "route-b" as const }]
       : []),
-    ...(currentOrder.driver?.id
-      ? [{ lat: currentOrder.pickup_lat + 0.002, lng: currentOrder.pickup_lon + 0.001, kind: "driver" as const, label: currentOrder.driver.name }]
+    ...((liveDemoState?.driverPosition && currentOrder.driver?.id)
+      ? [{
+          lat: liveDemoState.driverPosition.lat,
+          lng: liveDemoState.driverPosition.lng,
+          kind: "driver" as const,
+          label: currentOrder.driver.name,
+        }]
       : []),
   ];
+
+  const shareUrl =
+    typeof window !== "undefined" && sharePayload
+      ? getSharedTripUrl(sharePayload, window.location.origin)
+      : "";
+
+  const handleShareTrip = async () => {
+    if (!shareUrl) return;
+
+    if (navigator.share) {
+      await navigator.share({
+        title: "Поездка APARU",
+        text: "Отслеживайте мою поездку в APARU в реальном времени",
+        url: shareUrl,
+      });
+      return;
+    }
+
+    await navigator.clipboard.writeText(shareUrl);
+    setShareState("copied");
+    setTimeout(() => setShareState("idle"), 1800);
+  };
 
   return (
     <div className="flex h-screen max-w-[430px] mx-auto flex-col overflow-hidden">
@@ -100,6 +137,47 @@ export default function OrderPage() {
 
         {currentOrder.driver && (
           <DriverCard driver={currentOrder.driver} etaMinutes={currentOrder.eta_minutes} />
+        )}
+
+        {currentOrder.driver && shareUrl && currentOrder.status !== "trip_completed" && (
+          <div className="aparu-card p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[var(--aparu-teal-soft)] text-[var(--aparu-teal)]">
+                <Share2 size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-[var(--aparu-ink)]">Поделиться поездкой</p>
+                <p className="mt-1 text-sm text-[var(--aparu-muted)]">
+                  Отправьте близким ссылку, где видно движение такси и статус поездки.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              <Button size="md" onClick={handleShareTrip} className="w-full">
+                <Share2 size={16} />
+                {shareState === "copied" ? "Скопировано" : "Поделиться"}
+              </Button>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent("Отслеживайте мою поездку APARU")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-[22px] bg-[#27A6E5] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(39,166,229,0.22)]"
+              >
+                <Send size={15} />
+                Telegram
+              </a>
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(`Отслеживайте мою поездку APARU: ${shareUrl}`)}`}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-[22px] bg-[#25D366] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(37,211,102,0.22)]"
+              >
+                <MessageCircleMore size={15} />
+                WhatsApp
+              </a>
+            </div>
+          </div>
         )}
 
         {isDemo && demoAction && DemoActionIcon && (
