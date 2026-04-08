@@ -79,7 +79,7 @@ export default function SharedTripPage() {
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-4 rounded-t-[32px] bg-white px-4 pt-4 pb-6 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
+      <div className="-mt-6 flex flex-1 flex-col gap-4 rounded-t-[32px] bg-white px-4 pt-6 pb-6 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
         <div className="mx-auto h-1 w-10 rounded-full bg-[#d6dee2]" />
 
         <div className="aparu-card p-4">

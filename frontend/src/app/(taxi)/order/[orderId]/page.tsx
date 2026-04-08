@@ -130,7 +130,7 @@ export default function OrderPage() {
       </div>
 
       {/* Bottom sheet */}
-      <div className="flex max-h-[60vh] flex-col gap-3 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-3 pb-6 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
+      <div className="-mt-6 flex max-h-[60vh] flex-col gap-3 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-5 pb-6 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
         <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-[#d6dee2]" />
 
         <OrderStatusBar status={currentOrder.status} />

@@ -382,7 +382,7 @@ export default function ScanPage() {
       </div>
 
       {/* Bottom Sheet */}
-      <div className="relative z-[1100] flex max-h-[48vh] flex-col gap-2 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-3 pb-5 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
+      <div className="relative z-[1100] -mt-6 flex max-h-[48vh] flex-col gap-2 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-5 pb-5 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
         {/* Drag handle */}
         <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-[#d6dee2]" />
 
