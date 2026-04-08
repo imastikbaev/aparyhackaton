@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Building2, Crosshair, Hotel, Navigation, Pill, Soup, Stethoscope, X } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -10,7 +10,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { CardWalletIcon, CashWalletIcon, RouteBadgeIcon } from "@/components/ui/AparuIcons";
 import { buildRoute, geocodeAddress, getQRPoint, reverseGeocode } from "@/lib/api";
 import { getNearbyPlaceRecommendations, searchLocalAddresses } from "@/lib/localAddressSearch";
-import { estimatePrice } from "@/lib/pricing";
+import { estimateDistanceMeters, estimatePrice } from "@/lib/pricing";
 import { formatDistanceKm, formatDurationMin } from "@/lib/utils";
 import { useOrderStore } from "@/store/orderStore";
 import type { GeocodeResult, NearbyPlace, NearbyPlaceCategory, PaymentMethod, QRPoint, RouteResponse } from "@/types";
@@ -254,8 +254,38 @@ export default function ScanPage() {
       ]
     : [];
 
-  const routeCoords: [number, number][] = route
-    ? route.coordinates.map(([lng, lat]) => [lat, lng])
+  const fallbackDistance =
+    qrPoint && selectedDest
+      ? estimateDistanceMeters(
+          { latitude: qrPoint.latitude, longitude: qrPoint.longitude },
+          { latitude: selectedDest.latitude, longitude: selectedDest.longitude },
+        )
+      : null;
+
+  const fallbackTime = fallbackDistance != null ? (fallbackDistance / 7.8) * 1000 : null;
+
+  const displayRoute = useMemo(() => {
+    if (route) return route;
+    if (!qrPoint || !selectedDest || fallbackDistance == null || fallbackTime == null) return null;
+
+    return {
+      distance: fallbackDistance,
+      time: fallbackTime,
+      coordinates: [
+        [qrPoint.longitude, qrPoint.latitude],
+        [selectedDest.longitude, selectedDest.latitude],
+      ] as [number, number][],
+      bbox: [
+        Math.min(qrPoint.longitude, selectedDest.longitude),
+        Math.min(qrPoint.latitude, selectedDest.latitude),
+        Math.max(qrPoint.longitude, selectedDest.longitude),
+        Math.max(qrPoint.latitude, selectedDest.latitude),
+      ] as [number, number, number, number],
+    };
+  }, [fallbackDistance, fallbackTime, qrPoint, route, selectedDest]);
+
+  const routeCoords: [number, number][] = displayRoute
+    ? displayRoute.coordinates.map(([lng, lat]) => [lat, lng])
     : [];
 
   if (loading) {
@@ -298,7 +328,7 @@ export default function ScanPage() {
           <img src="/aparu/logo.svg" alt="APARU" className="h-5 w-auto" />
         </div>
 
-        {!selectionMode && route && (
+        {!selectionMode && displayRoute && (
           <div className="pointer-events-none absolute inset-x-0 top-16 z-[1000] flex justify-center px-4">
             <div className="flex items-center gap-3 rounded-[22px] bg-white/94 px-4 py-2.5 shadow-[0_16px_30px_rgba(24,39,75,0.16)] backdrop-blur">
               <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[var(--aparu-orange-soft)]">
@@ -309,7 +339,7 @@ export default function ScanPage() {
                   Кратчайший путь
                 </p>
                 <p className="text-sm font-semibold text-[var(--aparu-ink)]">
-                  {formatDistanceKm(route.distance)} · {formatDurationMin(route.time)}
+                  {formatDistanceKm(displayRoute.distance)} · {formatDurationMin(displayRoute.time)}
                 </p>
               </div>
             </div>
@@ -450,19 +480,19 @@ export default function ScanPage() {
             <span className="text-sm text-[var(--aparu-muted)]">Строим маршрут...</span>
           </div>
         )}
-        {route && (
+        {displayRoute && (
           <div className="flex gap-2">
             <div className="flex-1 rounded-[22px] bg-[var(--aparu-surface-soft)] px-3 py-2.5 text-center">
               <p className="text-xs text-[var(--aparu-muted)]">Расстояние</p>
-              <p className="font-bold text-[var(--aparu-ink)]">{formatDistanceKm(route.distance)}</p>
+              <p className="font-bold text-[var(--aparu-ink)]">{formatDistanceKm(displayRoute.distance)}</p>
             </div>
             <div className="flex-1 rounded-[22px] bg-[var(--aparu-surface-soft)] px-3 py-2.5 text-center">
               <p className="text-xs text-[var(--aparu-muted)]">Время</p>
-              <p className="font-bold text-[var(--aparu-ink)]">{formatDurationMin(route.time)}</p>
+              <p className="font-bold text-[var(--aparu-ink)]">{formatDurationMin(displayRoute.time)}</p>
             </div>
             <div className="flex-1 rounded-[22px] bg-[var(--aparu-orange-soft)] px-3 py-2.5 text-center">
               <p className="text-xs text-[var(--aparu-orange)]">По кратчайшему пути</p>
-              <p className="font-bold text-[var(--aparu-orange)]">~{estimatePrice(route.distance, tariff)} ₸</p>
+              <p className="font-bold text-[var(--aparu-orange)]">~{estimatePrice(displayRoute.distance, tariff)} ₸</p>
             </div>
           </div>
         )}
