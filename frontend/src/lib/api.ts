@@ -11,6 +11,7 @@ import type {
 import { createDemoOrder, DEMO_QR_POINT, isDemoQrId, isDemoToken } from "@/lib/demo";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
+const MAPS_BASE_URL = "/api/v1/maps";
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) {
@@ -37,6 +38,23 @@ async function request<T>(
     throw new ApiError(res.status, body.detail ?? "Ошибка запроса");
   }
   if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
+}
+
+async function mapsRequest<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${MAPS_BASE_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new ApiError(res.status, data.detail ?? "Ошибка Maps API");
+  }
+
   return res.json() as Promise<T>;
 }
 
@@ -81,24 +99,23 @@ export const getOrder = (orderId: number, token: string) =>
 // ─── Maps (прокси через наш бэкенд) ─────────────────────────────────────────
 
 export const geocodeAddress = (text: string, lat: number, lng: number) =>
-  request<GeocodeResponse>("/maps/geocode", {
-    method: "POST",
-    body: JSON.stringify({ text, latitude: lat, longitude: lng, withCities: true }),
+  mapsRequest<GeocodeResponse>("/geocode", {
+    text,
+    latitude: lat,
+    longitude: lng,
+    withCities: true,
   });
 
 export const reverseGeocode = (lat: number, lng: number) =>
-  request<ReverseGeocodeResponse>("/maps/reverse-geocode", {
-    method: "POST",
-    body: JSON.stringify({ latitude: lat, longitude: lng }),
+  mapsRequest<ReverseGeocodeResponse>("/reverse-geocode", {
+    latitude: lat,
+    longitude: lng,
   });
 
 export const buildRoute = (
   points: Array<{ latitude: number; longitude: number }>,
 ) =>
-  request<RouteResponse>("/maps/route", {
-    method: "POST",
-    body: JSON.stringify({ points }),
-  });
+  mapsRequest<RouteResponse>("/route", { points });
 
 // ─── WebSocket ───────────────────────────────────────────────────────────────
 

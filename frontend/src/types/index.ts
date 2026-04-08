@@ -104,6 +104,14 @@ export interface RouteResponse {
   time: number;          // миллисекунды
   coordinates: [number, number][]; // [lng, lat]
   bbox: [number, number, number, number];
+  instructions?: Array<{
+    distance: number;
+    time: number;
+    text: string;
+    streetName: string;
+    sign: number;
+    interval: [number, number];
+  }>;
 }
 
 // ─── WebSocket ───────────────────────────────────────────────────────────────
