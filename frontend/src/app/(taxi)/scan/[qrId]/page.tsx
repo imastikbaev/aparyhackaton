@@ -298,6 +298,24 @@ export default function ScanPage() {
           <img src="/aparu/logo.svg" alt="APARU" className="h-5 w-auto" />
         </div>
 
+        {!selectionMode && route && (
+          <div className="pointer-events-none absolute inset-x-0 top-16 z-[1000] flex justify-center px-4">
+            <div className="flex items-center gap-3 rounded-[22px] bg-white/94 px-4 py-2.5 shadow-[0_16px_30px_rgba(24,39,75,0.16)] backdrop-blur">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] bg-[var(--aparu-orange-soft)]">
+                <span className="text-sm font-bold text-[var(--aparu-orange)]">A→B</span>
+              </div>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.06em] text-[var(--aparu-orange)]">
+                  Кратчайший путь
+                </p>
+                <p className="text-sm font-semibold text-[var(--aparu-ink)]">
+                  {formatDistanceKm(route.distance)} · {formatDurationMin(route.time)}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {selectionMode && (
           <>
             <div className="pointer-events-none absolute inset-x-0 top-16 z-[1000] flex justify-center px-4">
@@ -443,7 +461,7 @@ export default function ScanPage() {
               <p className="font-bold text-[var(--aparu-ink)]">{formatDurationMin(route.time)}</p>
             </div>
             <div className="flex-1 rounded-[22px] bg-[var(--aparu-orange-soft)] px-3 py-2.5 text-center">
-              <p className="text-xs text-[var(--aparu-orange)]">Стоимость</p>
+              <p className="text-xs text-[var(--aparu-orange)]">По кратчайшему пути</p>
               <p className="font-bold text-[var(--aparu-orange)]">~{estimatePrice(route.distance, tariff)} ₸</p>
             </div>
           </div>

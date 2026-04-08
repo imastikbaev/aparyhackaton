@@ -104,6 +104,13 @@ export function LeafletMap({
       if (!mapRef.current) return;
 
       if (routeCoords.length > 1) {
+        const routeOutline = L.polyline(routeCoords, {
+          color: "#ffffff",
+          weight: 9,
+          opacity: 0.95,
+        }).addTo(map);
+        overlayRef.current.push(routeOutline);
+
         const poly = L.polyline(routeCoords, {
           color: "#FF6B00",
           weight: 5,
