@@ -12,6 +12,7 @@ interface OrderState {
   setToken: (token: string, phone: string) => void;
   setQRPoint: (point: QRPoint) => void;
   setOrder: (order: Order) => void;
+  setPendingOrder: (order: Partial<OrderCreate> | null) => void;
   patchOrder: (patch: Partial<Order>) => void;
   updateOrderStatus: (status: Order["status"], etaMinutes?: number) => void;
   reset: () => void;
@@ -29,6 +30,7 @@ export const useOrderStore = create<OrderState>()(
       setToken: (token, phone) => set({ token, phone }),
       setQRPoint: (point) => set({ currentQRPoint: point }),
       setOrder: (order) => set({ currentOrder: order }),
+      setPendingOrder: (order) => set({ pendingOrder: order }),
       patchOrder: (patch) =>
         set((state) => ({
           currentOrder: state.currentOrder ? { ...state.currentOrder, ...patch } : null,
@@ -45,7 +47,13 @@ export const useOrderStore = create<OrderState>()(
     }),
     {
       name: "aparu-store",
-      partialize: (s) => ({ token: s.token, phone: s.phone, currentQRPoint: s.currentQRPoint }),
+      partialize: (s) => ({
+        token: s.token,
+        phone: s.phone,
+        currentQRPoint: s.currentQRPoint,
+        currentOrder: s.currentOrder,
+        pendingOrder: s.pendingOrder,
+      }),
     },
   ),
 );

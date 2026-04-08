@@ -23,7 +23,7 @@ const LeafletMap = dynamic(
 export default function ScanPage() {
   const { qrId } = useParams<{ qrId: string }>();
   const router = useRouter();
-  const { token, setQRPoint } = useOrderStore();
+  const { token, setPendingOrder, setQRPoint } = useOrderStore();
 
   const [qrPoint, setQrPointLocal] = useState<QRPoint | null>(null);
   const [loading, setLoading] = useState(true);
@@ -207,23 +207,29 @@ export default function ScanPage() {
     }
   }, [formatReverseAddress, mapCenter, qrPoint, rebuildRoute, selectedDest, selectionMode, setQRPoint]);
 
+  const canOrder = Boolean(
+    selectedDest &&
+    !selectionMode &&
+    !routeLoading &&
+    !pickingLoading,
+  );
+
   const handleOrder = () => {
+    if (!canOrder || !selectedDest) return;
+
+    setPendingOrder({
+      qr_point_id: qrId,
+      destination_address: [selectedDest.address, selectedDest.additionalInfo].filter(Boolean).join(", "),
+      destination_lat: selectedDest.latitude,
+      destination_lon: selectedDest.longitude,
+      tariff,
+      payment_method: payment,
+      comment: comment.trim() || undefined,
+    });
+
     if (!token) {
       router.push(`/verify?next=/scan/${qrId}`);
     } else {
-      useOrderStore.setState({
-        pendingOrder: {
-          qr_point_id: qrId,
-          destination_address: selectedDest
-            ? `${selectedDest.address}, ${selectedDest.additionalInfo}`
-            : destQuery.trim() || undefined,
-          destination_lat: selectedDest?.latitude,
-          destination_lon: selectedDest?.longitude,
-          tariff,
-          payment_method: payment,
-          comment: comment.trim() || undefined,
-        },
-      });
       router.push(`/confirm?qr=${qrId}`);
     }
   };
@@ -570,7 +576,7 @@ export default function ScanPage() {
             </Button>
           </div>
         ) : (
-          <Button size="lg" onClick={handleOrder}>
+          <Button size="lg" onClick={handleOrder} disabled={!canOrder}>
             Заказать такси
           </Button>
         )}

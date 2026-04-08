@@ -15,13 +15,24 @@ export default function ConfirmPage() {
   const { token, currentQRPoint, pendingOrder, setOrder } = useOrderStore();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const hasDestination =
+    pendingOrder?.destination_lat != null &&
+    pendingOrder?.destination_lon != null &&
+    Boolean(pendingOrder.destination_address);
 
   useEffect(() => {
-    if (!token || !currentQRPoint) router.replace("/");
-  }, [token, currentQRPoint, router]);
+    if (!token || !currentQRPoint) {
+      router.replace("/");
+      return;
+    }
+
+    if (!hasDestination) {
+      router.replace(`/scan/${currentQRPoint.id}`);
+    }
+  }, [currentQRPoint, hasDestination, router, token]);
 
   const handleConfirm = async () => {
-    if (!token || !currentQRPoint) return;
+    if (!token || !currentQRPoint || !pendingOrder || !hasDestination) return;
     setLoading(true);
     setError(null);
     try {
@@ -41,10 +52,10 @@ export default function ConfirmPage() {
     }
   };
 
-  if (!currentQRPoint) return null;
+  if (!currentQRPoint || !hasDestination) return null;
 
   const distanceMeters =
-    pendingOrder?.destination_lat != null && pendingOrder?.destination_lon != null
+    pendingOrder.destination_lat != null && pendingOrder.destination_lon != null
       ? estimateDistanceMeters(
           { latitude: currentQRPoint.latitude, longitude: currentQRPoint.longitude },
           { latitude: pendingOrder.destination_lat, longitude: pendingOrder.destination_lon },
