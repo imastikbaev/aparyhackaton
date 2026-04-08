@@ -18,11 +18,12 @@ export default function CompletePage() {
     currentQRPoint?.id === "demo" ||
     currentQRPoint?.name?.toLowerCase().includes("oskemen hub") ||
     currentQRPoint?.address?.toLowerCase().includes("oskemen hub");
-  const socialCoffeeCoupon = {
-    title: "Купон от Social Coffee",
-    subtitle: "Скидка 15% на следующий заказ в заведении",
-    code: "SOCIAL-APARU-15",
-    description: "Покажите этот код в Social Coffee при следующем визите после поездки из Oskemen Hub.",
+  const socialCoinsReward = {
+    title: "Бонус в Social Coins",
+    subtitle: "Начисление 150 SC за поездку из Oskemen Hub",
+    code: "SC-APARU-150",
+    description:
+      "Social Coins (SC) — виртуальная валюта сообщества Astana Hub. Используйте этот код, чтобы получить 150 SC и потратить их на товары и услуги в Hub Market.",
   };
 
   const handleReorder = () => {
@@ -32,7 +33,7 @@ export default function CompletePage() {
   };
 
   const handleCopyCoupon = async () => {
-    await navigator.clipboard.writeText(socialCoffeeCoupon.code);
+    await navigator.clipboard.writeText(socialCoinsReward.code);
     setCouponCopied(true);
     setTimeout(() => setCouponCopied(false), 1800);
   };
@@ -92,15 +93,15 @@ export default function CompletePage() {
                   <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/65">
                     Партнёрский бонус
                   </p>
-                  <h2 className="mt-1 text-[20px] font-bold">{socialCoffeeCoupon.title}</h2>
-                  <p className="mt-1 text-sm text-white/75">{socialCoffeeCoupon.subtitle}</p>
+                  <h2 className="mt-1 text-[20px] font-bold">{socialCoinsReward.title}</h2>
+                  <p className="mt-1 text-sm text-white/75">{socialCoinsReward.subtitle}</p>
                 </div>
               </div>
 
               <div className="mt-4 rounded-[24px] border border-white/10 bg-white/8 px-4 py-4">
-                <p className="text-xs text-white/60">Промокод</p>
+                <p className="text-xs text-white/60">Код начисления</p>
                 <div className="mt-1 flex items-center justify-between gap-3">
-                  <p className="text-[24px] font-bold tracking-[0.16em]">{socialCoffeeCoupon.code}</p>
+                  <p className="text-[24px] font-bold tracking-[0.16em]">{socialCoinsReward.code}</p>
                   <button
                     type="button"
                     onClick={handleCopyCoupon}
@@ -110,7 +111,7 @@ export default function CompletePage() {
                     {couponCopied ? "Скопировано" : "Копировать"}
                   </button>
                 </div>
-                <p className="mt-3 text-sm leading-6 text-white/78">{socialCoffeeCoupon.description}</p>
+                <p className="mt-3 text-sm leading-6 text-white/78">{socialCoinsReward.description}</p>
               </div>
             </div>
           )}
