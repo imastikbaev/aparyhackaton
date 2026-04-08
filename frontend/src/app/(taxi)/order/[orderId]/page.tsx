@@ -3,13 +3,14 @@
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Car, Flag, MapPinned, MessageCircleMore, Send, Share2 } from "lucide-react";
+import { Car, Flag, MapPinned, MessageCircleMore, Send, Share2, XCircle } from "lucide-react";
 import { DriverCard } from "@/components/order/DriverCard";
 import { OrderStatusBar } from "@/components/order/OrderStatus";
 import { TripInfo } from "@/components/order/TripInfo";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useOrderStatus } from "@/hooks/useOrderStatus";
+import { cancelOrder } from "@/lib/api";
 import { isDemoToken } from "@/lib/demo";
 import { createSharedTripPayload, getSharedTripState, getSharedTripUrl } from "@/lib/tripShare";
 import { useOrderStore } from "@/store/orderStore";
@@ -22,8 +23,9 @@ const LeafletMap = dynamic(
 export default function OrderPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const router = useRouter();
-  const { currentOrder, patchOrder, token, updateOrderStatus } = useOrderStore();
+  const { currentOrder, currentQRPoint, patchOrder, reset, token, updateOrderStatus } = useOrderStore();
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
+  const [cancelLoading, setCancelLoading] = useState(false);
 
   useOrderStatus(Number(orderId));
 
@@ -117,6 +119,28 @@ export default function OrderPage() {
     setTimeout(() => setShareState("idle"), 1800);
   };
 
+  const handleCancelOrder = async () => {
+    if (!currentOrder || currentOrder.status !== "searching") return;
+
+    setCancelLoading(true);
+    try {
+      if (isDemo) {
+        patchOrder({ status: "cancelled", eta_minutes: 0 });
+      } else if (token) {
+        const cancelled = await cancelOrder(currentOrder.id, token);
+        patchOrder(cancelled);
+      }
+      reset();
+      if (currentQRPoint) {
+        router.push(`/scan/${currentQRPoint.id}`);
+      } else {
+        router.push("/");
+      }
+    } finally {
+      setCancelLoading(false);
+    }
+  };
+
   return (
     <div className="flex h-screen max-w-[430px] mx-auto flex-col overflow-hidden">
       {/* Карта */}
@@ -134,6 +158,25 @@ export default function OrderPage() {
         <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-[#d6dee2]" />
 
         <OrderStatusBar status={currentOrder.status} />
+
+        {currentOrder.status === "searching" && (
+          <div className="aparu-card p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[#fff2f2] text-[#d64545]">
+                <XCircle size={20} />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-[var(--aparu-ink)]">Можно отменить поиск</p>
+                <p className="mt-1 text-sm text-[var(--aparu-muted)]">
+                  Пока водитель ещё не назначен, заказ можно отменить без потери сессии.
+                </p>
+              </div>
+            </div>
+            <Button className="mt-4" variant="secondary" size="lg" onClick={handleCancelOrder} isLoading={cancelLoading}>
+              Отменить заказ
+            </Button>
+          </div>
+        )}
 
         {currentOrder.driver && (
           <DriverCard driver={currentOrder.driver} etaMinutes={currentOrder.eta_minutes} />

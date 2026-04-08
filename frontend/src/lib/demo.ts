@@ -1,4 +1,4 @@
-import type { Order, QRPoint } from "@/types";
+import type { Order, OrderStop, QRPoint } from "@/types";
 import { estimateDistanceMeters, estimatePrice } from "@/lib/pricing";
 
 export const DEMO_QR_ID = "demo";
@@ -34,6 +34,7 @@ export function createDemoOrder(input: {
   destinationAddress?: string;
   destinationLat?: number;
   destinationLon?: number;
+  stopovers?: OrderStop[];
   paymentMethod?: "cash" | "card";
   tariff?: string;
   comment?: string;
@@ -41,10 +42,16 @@ export function createDemoOrder(input: {
   const destinationLat = input.destinationLat ?? 49.9528653;
   const destinationLon = input.destinationLon ?? 82.6323419;
   const tariff = input.tariff ?? "standard";
-  const distanceMeters = estimateDistanceMeters(
+  const routeStops = input.stopovers ?? [];
+  const routePoints = [
     { latitude: DEMO_QR_POINT.latitude, longitude: DEMO_QR_POINT.longitude },
+    ...routeStops.map((stop) => ({ latitude: stop.latitude, longitude: stop.longitude })),
     { latitude: destinationLat, longitude: destinationLon },
-  );
+  ];
+  const distanceMeters = routePoints.slice(1).reduce((total, point, index) => {
+    const previous = routePoints[index];
+    return total + estimateDistanceMeters(previous, point);
+  }, 0);
 
   return {
     id: Date.now(),
@@ -55,6 +62,7 @@ export function createDemoOrder(input: {
     destination_address: input.destinationAddress ?? "Қазақстан көшесі, 76, Усть-Каменогорск",
     destination_lat: destinationLat,
     destination_lon: destinationLon,
+    stopovers: routeStops,
     tariff,
     payment_method: input.paymentMethod ?? "cash",
     comment: input.comment ?? null,

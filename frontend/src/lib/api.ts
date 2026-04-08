@@ -86,15 +86,30 @@ export const createOrder = (data: OrderCreate, token: string) =>
           destinationAddress: data.destination_address,
           destinationLat: data.destination_lat,
           destinationLon: data.destination_lon,
+          stopovers: data.stopovers,
           paymentMethod: data.payment_method,
           tariff: data.tariff,
           comment: data.comment,
         }),
       )
-    : request<Order>("/orders", { method: "POST", body: JSON.stringify(data), token });
+    : request<Order>("/orders", {
+        method: "POST",
+        body: JSON.stringify({
+          qr_point_id: data.qr_point_id,
+          destination_address: data.destination_address,
+          destination_lat: data.destination_lat,
+          destination_lon: data.destination_lon,
+          tariff: data.tariff,
+          payment_method: data.payment_method,
+        }),
+        token,
+      });
 
 export const getOrder = (orderId: number, token: string) =>
   request<Order>(`/orders/${orderId}`, { token });
+
+export const cancelOrder = (orderId: number, token: string) =>
+  request<Order>(`/orders/${orderId}/cancel`, { method: "POST", token });
 
 // ─── Maps (прокси через наш бэкенд) ─────────────────────────────────────────
 

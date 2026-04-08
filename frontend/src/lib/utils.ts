@@ -18,7 +18,8 @@ export const ORDER_STATUS_STEPS: OrderStatus[] = [
 ];
 
 export function getStepIndex(status: OrderStatus): number {
-  return ORDER_STATUS_STEPS.indexOf(status);
+  const index = ORDER_STATUS_STEPS.indexOf(status);
+  return index >= 0 ? index : 0;
 }
 
 export function formatDistanceKm(meters: number): string {

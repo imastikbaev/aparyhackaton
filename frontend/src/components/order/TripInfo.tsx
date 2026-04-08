@@ -23,6 +23,20 @@ export function TripInfo({ order }: { order: Order }) {
 
         {order.destination_address && (
           <>
+            {order.stopovers?.map((stop, index) => (
+              <div key={`${stop.address}-${index}`}>
+                <div className="ml-3.5 h-3 border-l-2 border-dashed border-[#dde5e8]" />
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[var(--aparu-teal-soft)] text-xs font-bold text-[var(--aparu-teal)]">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="text-xs text-[var(--aparu-teal)]">Остановка</p>
+                    <p className="text-[14px] font-medium text-[var(--aparu-ink)]">{stop.address}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
             <div className="ml-3.5 h-3 border-l-2 border-dashed border-[#dde5e8]" />
             <div className="flex items-start gap-3">
               <RouteBadgeIcon label="B" tone="teal" size={28} className="mt-0.5 flex-shrink-0" />

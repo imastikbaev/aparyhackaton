@@ -13,7 +13,7 @@ import { getNearbyPlaceRecommendations, searchLocalAddresses } from "@/lib/local
 import { estimateDistanceMeters, estimatePrice } from "@/lib/pricing";
 import { formatDistanceKm, formatDurationMin } from "@/lib/utils";
 import { useOrderStore } from "@/store/orderStore";
-import type { GeocodeResult, NearbyPlace, NearbyPlaceCategory, PaymentMethod, QRPoint, RouteResponse } from "@/types";
+import type { GeocodeResult, NearbyPlace, NearbyPlaceCategory, OrderStop, PaymentMethod, QRPoint, RouteResponse } from "@/types";
 
 const LeafletMap = dynamic(
   () => import("@/components/map/LeafletMap").then((m) => m.LeafletMap),
@@ -23,7 +23,7 @@ const LeafletMap = dynamic(
 export default function ScanPage() {
   const { qrId } = useParams<{ qrId: string }>();
   const router = useRouter();
-  const { token, setPendingOrder, setQRPoint } = useOrderStore();
+  const { token, pendingOrder, setPendingOrder, setQRPoint } = useOrderStore();
 
   const [qrPoint, setQrPointLocal] = useState<QRPoint | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,6 +34,7 @@ export default function ScanPage() {
   const [suggestions, setSuggestions] = useState<GeocodeResult[]>([]);
   const [selectedDest, setSelectedDest] = useState<GeocodeResult | null>(null);
   const [route, setRoute] = useState<RouteResponse | null>(null);
+  const [stopovers, setStopovers] = useState<OrderStop[]>([]);
   const [routeLoading, setRouteLoading] = useState(false);
   const [nearbyPlaces, setNearbyPlaces] = useState<NearbyPlace[]>([]);
   const [payment, setPayment] = useState<PaymentMethod>("cash");
@@ -48,6 +49,7 @@ export default function ScanPage() {
   const rebuildRoute = useCallback(
     async (
       pickup: { latitude: number; longitude: number },
+      stops: Array<{ latitude: number; longitude: number }>,
       destination: { latitude: number; longitude: number } | null,
     ) => {
       if (!destination) {
@@ -59,6 +61,7 @@ export default function ScanPage() {
       try {
         const r = await buildRoute([
           pickup,
+          ...stops,
           destination,
         ]);
         setRoute(r);
@@ -93,6 +96,13 @@ export default function ScanPage() {
       .then(setNearbyPlaces)
       .catch(() => setNearbyPlaces([]));
   }, [qrPoint]);
+
+  useEffect(() => {
+    if (!pendingOrder || pendingOrder.qr_point_id !== qrId) return;
+    if (pendingOrder.stopovers?.length) {
+      setStopovers(pendingOrder.stopovers);
+    }
+  }, [pendingOrder, qrId]);
 
   // Поиск адреса назначения с debounce
   const handleDestInput = useCallback(
@@ -139,10 +149,11 @@ export default function ScanPage() {
 
       await rebuildRoute(
         { latitude: qrPoint.latitude, longitude: qrPoint.longitude },
+        stopovers,
         { latitude: item.latitude, longitude: item.longitude },
       );
     },
-    [qrPoint, rebuildRoute],
+    [qrPoint, rebuildRoute, stopovers],
   );
 
   const startPicking = useCallback((mode: "pickup" | "destination") => {
@@ -181,6 +192,7 @@ export default function ScanPage() {
         setQRPoint(updatedPoint);
         await rebuildRoute(
           { latitude, longitude },
+          stopovers,
           selectedDest
             ? { latitude: selectedDest.latitude, longitude: selectedDest.longitude }
             : null,
@@ -197,6 +209,7 @@ export default function ScanPage() {
         setDestQuery(resolvedAddress);
         await rebuildRoute(
           { latitude: qrPoint.latitude, longitude: qrPoint.longitude },
+          stopovers,
           { latitude, longitude },
         );
       }
@@ -205,7 +218,38 @@ export default function ScanPage() {
     } finally {
       setPickingLoading(false);
     }
-  }, [formatReverseAddress, mapCenter, qrPoint, rebuildRoute, selectedDest, selectionMode, setQRPoint]);
+  }, [formatReverseAddress, mapCenter, qrPoint, rebuildRoute, selectedDest, selectionMode, setQRPoint, stopovers]);
+
+  const addStopover = useCallback(async () => {
+    if (!selectedDest) return;
+
+    const nextStop: OrderStop = {
+      address: [selectedDest.address, selectedDest.additionalInfo].filter(Boolean).join(", "),
+      latitude: selectedDest.latitude,
+      longitude: selectedDest.longitude,
+    };
+    const nextStops = [...stopovers, nextStop].slice(0, 3);
+
+    setStopovers(nextStops);
+    setSelectedDest(null);
+    setDestQuery("");
+    setSuggestions([]);
+    setRoute(null);
+  }, [selectedDest, stopovers]);
+
+  const removeStopover = useCallback(
+    async (index: number) => {
+      if (!qrPoint) return;
+      const nextStops = stopovers.filter((_, itemIndex) => itemIndex !== index);
+      setStopovers(nextStops);
+      await rebuildRoute(
+        { latitude: qrPoint.latitude, longitude: qrPoint.longitude },
+        nextStops,
+        selectedDest ? { latitude: selectedDest.latitude, longitude: selectedDest.longitude } : null,
+      );
+    },
+    [qrPoint, rebuildRoute, selectedDest, stopovers],
+  );
 
   const canOrder = Boolean(
     selectedDest &&
@@ -219,6 +263,7 @@ export default function ScanPage() {
 
     setPendingOrder({
       qr_point_id: qrId,
+      stopovers,
       destination_address: [selectedDest.address, selectedDest.additionalInfo].filter(Boolean).join(", "),
       destination_lat: selectedDest.latitude,
       destination_lon: selectedDest.longitude,
@@ -256,18 +301,30 @@ export default function ScanPage() {
 
     return [
       { lat: qrPoint.latitude, lng: qrPoint.longitude, kind: "route-a" as const, label: qrPoint.name },
+      ...stopovers.map((stop) => ({
+        lat: stop.latitude,
+        lng: stop.longitude,
+        color: "dark" as const,
+        label: stop.address,
+      })),
       ...(selectedDest
         ? [{ lat: selectedDest.latitude, lng: selectedDest.longitude, kind: "route-b" as const, label: selectedDest.address }]
         : []),
     ];
-  }, [qrPoint, selectedDest]);
+  }, [qrPoint, selectedDest, stopovers]);
 
   const fallbackDistance =
     qrPoint && selectedDest
-      ? estimateDistanceMeters(
+      ? [
           { latitude: qrPoint.latitude, longitude: qrPoint.longitude },
+          ...stopovers.map((stop) => ({ latitude: stop.latitude, longitude: stop.longitude })),
           { latitude: selectedDest.latitude, longitude: selectedDest.longitude },
-        )
+        ].slice(1).reduce((total, point, index, array) => {
+          const previous = index === 0
+            ? { latitude: qrPoint.latitude, longitude: qrPoint.longitude }
+            : array[index - 1];
+          return total + estimateDistanceMeters(previous, point);
+        }, 0)
       : null;
 
   const fallbackTime = fallbackDistance != null ? (fallbackDistance / 7.8) * 1000 : null;
@@ -281,16 +338,17 @@ export default function ScanPage() {
       time: fallbackTime,
       coordinates: [
         [qrPoint.longitude, qrPoint.latitude],
+        ...stopovers.map((stop) => [stop.longitude, stop.latitude] as [number, number]),
         [selectedDest.longitude, selectedDest.latitude],
       ] as [number, number][],
       bbox: [
-        Math.min(qrPoint.longitude, selectedDest.longitude),
-        Math.min(qrPoint.latitude, selectedDest.latitude),
-        Math.max(qrPoint.longitude, selectedDest.longitude),
-        Math.max(qrPoint.latitude, selectedDest.latitude),
+        Math.min(qrPoint.longitude, ...stopovers.map((stop) => stop.longitude), selectedDest.longitude),
+        Math.min(qrPoint.latitude, ...stopovers.map((stop) => stop.latitude), selectedDest.latitude),
+        Math.max(qrPoint.longitude, ...stopovers.map((stop) => stop.longitude), selectedDest.longitude),
+        Math.max(qrPoint.latitude, ...stopovers.map((stop) => stop.latitude), selectedDest.latitude),
       ] as [number, number, number, number],
     };
-  }, [fallbackDistance, fallbackTime, qrPoint, route, selectedDest]);
+  }, [fallbackDistance, fallbackTime, qrPoint, route, selectedDest, stopovers]);
 
   const routeCoords = useMemo<[number, number][]>(() => {
     if (!displayRoute) return [];
@@ -428,6 +486,34 @@ export default function ScanPage() {
             </button>
           </div>
 
+          {stopovers.length > 0 && (
+            <div className="mt-2 flex flex-col gap-2">
+              {stopovers.map((stop, index) => (
+                <div
+                  key={`${stop.address}-${index}`}
+                  className="flex items-center gap-3 rounded-[20px] border border-[var(--aparu-line)] bg-white px-3 py-2.5"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--aparu-teal-soft)] text-xs font-bold text-[var(--aparu-teal)]">
+                    {index + 1}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--aparu-muted)]">
+                      Остановка
+                    </p>
+                    <p className="truncate text-sm font-medium text-[var(--aparu-ink)]">{stop.address}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeStopover(index)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full text-[var(--aparu-muted)] hover:bg-[var(--aparu-surface-soft)]"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Suggestions */}
           {suggestions.length > 0 && (
             <div className="absolute top-full left-0 right-0 z-10 mt-2 overflow-hidden rounded-[24px] border border-[var(--aparu-line)] bg-white shadow-[0_20px_40px_rgba(24,39,75,0.14)]">
@@ -447,6 +533,16 @@ export default function ScanPage() {
             </div>
           )}
         </div>
+
+        {selectedDest && stopovers.length < 3 && (
+          <button
+            type="button"
+            onClick={addStopover}
+            className="flex items-center justify-center rounded-[20px] border border-dashed border-[var(--aparu-teal)]/35 bg-[var(--aparu-teal-soft)]/45 px-4 py-3 text-sm font-semibold text-[var(--aparu-teal)]"
+          >
+            Добавить как промежуточную остановку
+          </button>
+        )}
 
         {!destQuery && !selectionMode && nearbyPlaces.length > 0 && (
           <div className="px-1 pt-0.5">

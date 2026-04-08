@@ -43,7 +43,11 @@ export default function ConfirmPage() {
         },
         token,
       );
-      setOrder(order);
+      setOrder({
+        ...order,
+        comment: pendingOrder.comment ?? order.comment,
+        stopovers: pendingOrder.stopovers ?? order.stopovers,
+      });
       router.push(`/order/${order.id}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Ошибка создания заказа");
@@ -80,6 +84,20 @@ export default function ConfirmPage() {
 
           {pendingOrder?.destination_address && (
             <>
+              {pendingOrder.stopovers?.map((stop, index) => (
+                <div key={`${stop.address}-${index}`}>
+                  <div className="ml-5 h-3 border-l-2 border-dashed border-[#d9e1e4]" />
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-[var(--aparu-teal-soft)] text-xs font-bold text-[var(--aparu-teal)]">
+                      {index + 1}
+                    </div>
+                    <div>
+                      <p className="text-xs text-[var(--aparu-teal)]">Остановка</p>
+                      <p className="font-semibold text-[var(--aparu-ink)]">{stop.address}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
               <div className="ml-5 h-3 border-l-2 border-dashed border-[#d9e1e4]" />
               <div className="flex items-start gap-3">
                 <RouteBadgeIcon label="B" tone="teal" />

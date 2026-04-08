@@ -31,6 +31,12 @@ export type OrderStatus =
 
 export type PaymentMethod = "cash" | "card";
 
+export interface OrderStop {
+  address: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface Order {
   id: number;
   status: OrderStatus;
@@ -40,6 +46,7 @@ export interface Order {
   destination_address: string | null;
   destination_lat: number | null;
   destination_lon: number | null;
+  stopovers?: OrderStop[];
   tariff: string;
   payment_method: PaymentMethod;
   comment?: string | null;
@@ -54,6 +61,7 @@ export interface OrderCreate {
   destination_address?: string;
   destination_lat?: number;
   destination_lon?: number;
+  stopovers?: OrderStop[];
   tariff?: string;
   payment_method?: PaymentMethod;
   comment?: string;
