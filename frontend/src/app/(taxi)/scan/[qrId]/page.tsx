@@ -325,12 +325,12 @@ export default function ScanPage() {
       </div>
 
       {/* Bottom Sheet */}
-      <div className="rounded-t-[32px] bg-white px-4 pt-3 pb-6 shadow-[0_-14px_40px_rgba(24,39,75,0.12)] flex flex-col gap-3">
+      <div className="flex max-h-[48vh] flex-col gap-2 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-3 pb-5 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
         {/* Drag handle */}
         <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-[#d6dee2]" />
 
         {/* Точка А — откуда */}
-        <div className="flex items-center gap-3 rounded-[26px] bg-[var(--aparu-orange-soft)] px-4 py-3.5">
+        <div className="flex items-center gap-3 rounded-[24px] bg-[var(--aparu-orange-soft)] px-4 py-3">
           <RouteBadgeIcon label="A" tone="orange" />
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-[var(--aparu-orange)]">Откуда</p>
@@ -348,7 +348,7 @@ export default function ScanPage() {
 
         {/* Точка Б — куда */}
         <div className="relative">
-          <div className="flex items-center gap-3 rounded-[26px] bg-[var(--aparu-surface-soft)] px-4 py-3.5">
+          <div className="flex items-center gap-3 rounded-[24px] bg-[var(--aparu-surface-soft)] px-4 py-3">
             <RouteBadgeIcon label="B" tone="teal" />
             <input
               type="text"
@@ -392,12 +392,12 @@ export default function ScanPage() {
         </div>
 
         {!destQuery && !selectionMode && nearbyPlaces.length > 0 && (
-          <div className="rounded-[20px] bg-[var(--aparu-surface-soft)]/72 px-3 py-2.5">
-            <div className="mb-2 flex items-center justify-between">
-              <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--aparu-muted)]">
-                Куда можно поехать рядом
+          <div className="px-1 pt-0.5">
+            <div className="mb-1.5 flex items-center justify-between">
+              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-[var(--aparu-muted)]">
+                Рядом
               </p>
-              <p className="text-[11px] text-[var(--aparu-muted)]">Подсказки</p>
+              <p className="text-[10px] text-[var(--aparu-muted)]">Быстрый выбор</p>
             </div>
             <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {nearbyPlaces.slice(0, 5).map((place, index) => {
@@ -407,14 +407,14 @@ export default function ScanPage() {
                     key={`${place.address}-${index}`}
                     type="button"
                     onClick={() => selectDest(place)}
-                    className="flex w-[152px] flex-shrink-0 items-center gap-2 rounded-[18px] border border-white/70 bg-white/85 px-3 py-2 text-left shadow-[0_6px_14px_rgba(24,39,75,0.05)] backdrop-blur"
+                    className="flex w-auto max-w-[150px] flex-shrink-0 items-center gap-2 rounded-full border border-[var(--aparu-line)] bg-white px-3 py-1.5 text-left shadow-[0_4px_10px_rgba(24,39,75,0.04)]"
                   >
-                    <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[11px] bg-[var(--aparu-teal-soft)]/80 text-[var(--aparu-teal)]">
-                      <Icon size={15} />
+                    <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[var(--aparu-teal-soft)]/80 text-[var(--aparu-teal)]">
+                      <Icon size={13} />
                     </span>
                     <span className="min-w-0">
-                      <span className="block truncate text-[12px] font-medium text-[var(--aparu-ink)]">{place.address}</span>
-                      <span className="block truncate text-[10px] text-[var(--aparu-muted)]">
+                      <span className="block truncate text-[11px] font-medium leading-tight text-[var(--aparu-ink)]">{place.address}</span>
+                      <span className="block truncate text-[10px] leading-tight text-[var(--aparu-muted)]">
                         {nearbyLabels[place.category]} · {Math.max(1, Math.round(place.distanceMeters / 100) / 10)} км
                       </span>
                     </span>
@@ -460,14 +460,14 @@ export default function ScanPage() {
               type="button"
               onClick={() => setTariff(option.id as "economy" | "standard" | "comfort")}
               className={[
-                "rounded-[22px] px-3 py-3 text-center transition-all",
+                "rounded-[20px] px-2 py-2.5 text-center transition-all",
                 tariff === option.id
                   ? "bg-[var(--aparu-orange-soft)] text-[var(--aparu-orange)] shadow-[0_12px_24px_rgba(255,107,0,0.12)]"
                   : "bg-[var(--aparu-surface-soft)] text-[var(--aparu-muted)]",
               ].join(" ")}
             >
-              <p className="text-sm font-semibold">{option.label}</p>
-              <p className="mt-0.5 text-[11px]">{option.sub}</p>
+              <p className="text-[13px] font-semibold">{option.label}</p>
+              <p className="mt-0.5 text-[10px]">{option.sub}</p>
             </button>
           ))}
         </div>
@@ -500,14 +500,14 @@ export default function ScanPage() {
           </button>
         </div>
 
-        <div className="rounded-[24px] bg-[var(--aparu-surface-soft)] px-4 py-3">
+        <div className="rounded-[22px] bg-[var(--aparu-surface-soft)] px-4 py-2.5">
           <p className="text-xs font-medium text-[var(--aparu-muted)]">Комментарий к заказу</p>
           <textarea
-            rows={3}
+            rows={2}
             value={comment}
             onChange={(e) => setComment(e.target.value)}
             placeholder="Например: подъезд со стороны двора, буду в синей куртке"
-            className="mt-2 w-full resize-none bg-transparent text-[14px] text-[var(--aparu-ink)] placeholder:text-[#9ca8ae] outline-none"
+            className="mt-1.5 w-full resize-none bg-transparent text-[14px] text-[var(--aparu-ink)] placeholder:text-[#9ca8ae] outline-none"
           />
         </div>
 

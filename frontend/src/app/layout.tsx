@@ -16,11 +16,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ru" style={{ height: "100%" }}>
+    <html lang="ru" style={{ minHeight: "100%" }}>
       <body
         style={{
-          height: "100%",
-          overflow: "hidden",
+          minHeight: "100%",
+          overflowX: "hidden",
           fontFamily:
             '"Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif',
         }}
