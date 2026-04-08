@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { CheckCircle, Download, Star } from "lucide-react";
+import { CheckCircle, Copy, Gift, Star } from "lucide-react";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
@@ -13,11 +13,28 @@ export default function CompletePage() {
   const { currentQRPoint, currentOrder, reset } = useOrderStore();
   const router = useRouter();
   const [rating, setRating] = useState(0);
+  const [couponCopied, setCouponCopied] = useState(false);
+  const showOskemenHubCoupon =
+    currentQRPoint?.id === "demo" ||
+    currentQRPoint?.name?.toLowerCase().includes("oskemen hub") ||
+    currentQRPoint?.address?.toLowerCase().includes("oskemen hub");
+  const socialCoffeeCoupon = {
+    title: "Купон от Social Coffee",
+    subtitle: "Скидка 15% на следующий заказ в заведении",
+    code: "SOCIAL-APARU-15",
+    description: "Покажите этот код в Social Coffee при следующем визите после поездки из Oskemen Hub.",
+  };
 
   const handleReorder = () => {
     reset();
     if (currentQRPoint) router.push(`/scan/${currentQRPoint.id}`);
     else router.push("/");
+  };
+
+  const handleCopyCoupon = async () => {
+    await navigator.clipboard.writeText(socialCoffeeCoupon.code);
+    setCouponCopied(true);
+    setTimeout(() => setCouponCopied(false), 1800);
   };
 
   return (
@@ -62,6 +79,39 @@ export default function CompletePage() {
                   Спасибо за отзыв. Твоя оценка: <span className="font-semibold text-[var(--aparu-ink)]">{rating}/5</span>
                 </p>
               )}
+            </div>
+          )}
+
+          {showOskemenHubCoupon && (
+            <div className="w-full rounded-[30px] bg-gradient-to-br from-[#1a2a2f] via-[#16363b] to-[#0d8e95] p-5 text-white shadow-[0_20px_38px_rgba(13,142,149,0.18)]">
+              <div className="flex items-start gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-white/12">
+                  <Gift size={24} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/65">
+                    Партнёрский бонус
+                  </p>
+                  <h2 className="mt-1 text-[20px] font-bold">{socialCoffeeCoupon.title}</h2>
+                  <p className="mt-1 text-sm text-white/75">{socialCoffeeCoupon.subtitle}</p>
+                </div>
+              </div>
+
+              <div className="mt-4 rounded-[24px] border border-white/10 bg-white/8 px-4 py-4">
+                <p className="text-xs text-white/60">Промокод</p>
+                <div className="mt-1 flex items-center justify-between gap-3">
+                  <p className="text-[24px] font-bold tracking-[0.16em]">{socialCoffeeCoupon.code}</p>
+                  <button
+                    type="button"
+                    onClick={handleCopyCoupon}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-[18px] bg-white px-4 text-sm font-semibold text-[#0d8e95] shadow-[0_12px_24px_rgba(255,255,255,0.14)]"
+                  >
+                    <Copy size={16} />
+                    {couponCopied ? "Скопировано" : "Копировать"}
+                  </button>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-white/78">{socialCoffeeCoupon.description}</p>
+              </div>
             </div>
           )}
 
