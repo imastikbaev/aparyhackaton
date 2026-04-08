@@ -44,6 +44,25 @@ const ORDER_FLOW: OrderStatus[] = [
   "trip_completed",
 ];
 
+const TARIFFS = ["economy", "standard", "comfort"] as const;
+
+type CompactSharedTripPayload = [
+  number,
+  number,
+  number,
+  number,
+  string,
+  number,
+  number,
+  string | null,
+  number | null,
+  number | null,
+  [string, string, string, string, number] | null,
+  number,
+  number | null,
+  number | null,
+];
+
 function toBase64Url(value: string): string {
   if (typeof window === "undefined") {
     return Buffer.from(value, "utf8").toString("base64url");
@@ -68,6 +87,86 @@ function interpolate(start: { lat: number; lng: number }, end: { lat: number; ln
   return {
     lat: start.lat + (end.lat - start.lat) * progress,
     lng: start.lng + (end.lng - start.lng) * progress,
+  };
+}
+
+function roundCoord(value: number | null): number | null {
+  return value == null ? null : Number(value.toFixed(5));
+}
+
+function compactPayload(payload: SharedTripPayload): CompactSharedTripPayload {
+  return [
+    payload.orderId,
+    new Date(payload.createdAt).getTime(),
+    new Date(payload.sharedAt).getTime(),
+    Math.max(0, ORDER_FLOW.indexOf(payload.status)),
+    payload.pickup.address,
+    roundCoord(payload.pickup.lat) ?? payload.pickup.lat,
+    roundCoord(payload.pickup.lon) ?? payload.pickup.lon,
+    payload.destination.address,
+    roundCoord(payload.destination.lat),
+    roundCoord(payload.destination.lon),
+    payload.driver
+      ? [
+          payload.driver.name,
+          payload.driver.car_model,
+          payload.driver.car_color,
+          payload.driver.car_number,
+          Number(payload.driver.rating.toFixed(1)),
+        ]
+      : null,
+    Math.max(0, TARIFFS.indexOf((payload.tariff as (typeof TARIFFS)[number]) ?? "standard")),
+    payload.priceEstimate != null ? Math.round(payload.priceEstimate) : null,
+    payload.etaMinutes,
+  ];
+}
+
+function expandPayload(compact: CompactSharedTripPayload): SharedTripPayload {
+  const [
+    orderId,
+    createdAtMs,
+    sharedAtMs,
+    statusIndex,
+    pickupAddress,
+    pickupLat,
+    pickupLon,
+    destinationAddress,
+    destinationLat,
+    destinationLon,
+    driver,
+    tariffIndex,
+    priceEstimate,
+    etaMinutes,
+  ] = compact;
+
+  return {
+    orderId,
+    createdAt: new Date(createdAtMs).toISOString(),
+    sharedAt: new Date(sharedAtMs).toISOString(),
+    status: ORDER_FLOW[statusIndex] ?? "driver_assigned",
+    pickup: {
+      address: pickupAddress,
+      lat: pickupLat,
+      lon: pickupLon,
+    },
+    destination: {
+      address: destinationAddress,
+      lat: destinationLat,
+      lon: destinationLon,
+    },
+    driver: driver
+      ? {
+          id: 1,
+          name: driver[0],
+          car_model: driver[1],
+          car_color: driver[2],
+          car_number: driver[3],
+          rating: driver[4],
+        }
+      : null,
+    tariff: TARIFFS[tariffIndex] ?? "standard",
+    priceEstimate,
+    etaMinutes,
   };
 }
 
@@ -105,12 +204,13 @@ export function createSharedTripPayload(order: Order): SharedTripPayload {
 }
 
 export function encodeSharedTripPayload(payload: SharedTripPayload): string {
-  return toBase64Url(JSON.stringify(payload));
+  return toBase64Url(JSON.stringify(compactPayload(payload)));
 }
 
 export function decodeSharedTripPayload(token: string): SharedTripPayload | null {
   try {
-    return JSON.parse(fromBase64Url(token)) as SharedTripPayload;
+    const parsed = JSON.parse(fromBase64Url(token)) as SharedTripPayload | CompactSharedTripPayload;
+    return Array.isArray(parsed) ? expandPayload(parsed as CompactSharedTripPayload) : parsed;
   } catch {
     return null;
   }

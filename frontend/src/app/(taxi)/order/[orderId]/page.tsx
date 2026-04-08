@@ -159,7 +159,7 @@ export default function OrderPage() {
                 {shareState === "copied" ? "Скопировано" : "Поделиться"}
               </Button>
               <a
-                href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent("Отслеживайте мою поездку APARU")}`}
+                href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-[22px] bg-[#27A6E5] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(39,166,229,0.22)]"
@@ -168,7 +168,7 @@ export default function OrderPage() {
                 Telegram
               </a>
               <a
-                href={`https://wa.me/?text=${encodeURIComponent(`Отслеживайте мою поездку APARU: ${shareUrl}`)}`}
+                href={`https://wa.me/?text=${encodeURIComponent(shareUrl)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-[22px] bg-[#25D366] px-4 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(37,211,102,0.22)]"
