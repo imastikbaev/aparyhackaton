@@ -251,14 +251,16 @@ export default function ScanPage() {
   };
 
   // Маркеры карты
-  const markers = qrPoint
-    ? [
-        { lat: qrPoint.latitude, lng: qrPoint.longitude, kind: "route-a" as const, label: qrPoint.name },
-        ...(selectedDest
-          ? [{ lat: selectedDest.latitude, lng: selectedDest.longitude, kind: "route-b" as const, label: selectedDest.address }]
-          : []),
-      ]
-    : [];
+  const markers = useMemo(() => {
+    if (!qrPoint) return [];
+
+    return [
+      { lat: qrPoint.latitude, lng: qrPoint.longitude, kind: "route-a" as const, label: qrPoint.name },
+      ...(selectedDest
+        ? [{ lat: selectedDest.latitude, lng: selectedDest.longitude, kind: "route-b" as const, label: selectedDest.address }]
+        : []),
+    ];
+  }, [qrPoint, selectedDest]);
 
   const fallbackDistance =
     qrPoint && selectedDest
@@ -290,9 +292,10 @@ export default function ScanPage() {
     };
   }, [fallbackDistance, fallbackTime, qrPoint, route, selectedDest]);
 
-  const routeCoords: [number, number][] = displayRoute
-    ? displayRoute.coordinates.map(([lng, lat]) => [lat, lng])
-    : [];
+  const routeCoords = useMemo<[number, number][]>(() => {
+    if (!displayRoute) return [];
+    return displayRoute.coordinates.map(([lng, lat]) => [lat, lng]);
+  }, [displayRoute]);
 
   if (loading) {
     return (
