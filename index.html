@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+  <title>APARU — Такси по QR</title>
+
+  <!--
+  ╔══════════════════════════════════════════════╗
+  ║  APARU QR Taxi — Architecture Overview       ║
+  ║                                              ║
+  ║  css/styles.css  — global styles             ║
+  ║  js/config.js    — design tokens, API, flags ║
+  ║  js/data.js      — address dataset           ║
+  ║  js/app.js       — React app (all screens)   ║
+  ╚══════════════════════════════════════════════╝
+  -->
+
+  <!-- ── Maps ──────────────────────────────── -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+  <!-- ── React 18 (production build) ─────── -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+
+  <!-- ── Babel (JSX transpiler, CDN) ──────── -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+
+  <!-- ── Lucide React icons (UMD) ─────────── -->
+  <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js"></script>
+
+  <!-- ── Fonts ─────────────────────────────── -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+
+  <!-- ── Styles (extracted to own file) ────── -->
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+<div id="root"></div>
+
+<!--
+  Load order matters:
+  1. config.js  — must come first (defines C, API, IS_DEV, getQRParams)
+  2. data.js    — must come before app.js (defines UKA_ADDRESSES, searchLocal)
+  3. app.js     — React app, uses all globals above
+-->
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script type="text/babel" src="js/app.js"></script>
+
+</body>
+</html>
