@@ -5,13 +5,31 @@ export const DEMO_QR_ID = "demo";
 export const DEMO_TOKEN = "demo-token";
 export const DEMO_OTP_CODE = "1111";
 
-const DEMO_DRIVER = {
-  id: 1,
-  name: "Айдар",
-  car_model: "Hyundai Elantra",
-  car_color: "Белый",
-  car_number: "707 APA 02",
-  rating: 4.9,
+const DEMO_DRIVERS: Record<string, { id: number; name: string; car_model: string; car_color: string; car_number: string; rating: number }> = {
+  economy: {
+    id: 1,
+    name: "Даурен К.",
+    car_model: "Lada Priora",
+    car_color: "Серебристый",
+    car_number: "458 КА 01",
+    rating: 4.7,
+  },
+  standard: {
+    id: 2,
+    name: "Сергей Н.",
+    car_model: "Chevrolet Cobalt",
+    car_color: "Белый",
+    car_number: "221 АВ 01",
+    rating: 4.8,
+  },
+  comfort: {
+    id: 3,
+    name: "Алексей М.",
+    car_model: "Toyota Camry",
+    car_color: "Чёрный",
+    car_number: "777 АА 01",
+    rating: 4.9,
+  },
 };
 
 export const DEMO_QR_POINT: QRPoint = {
@@ -74,10 +92,11 @@ export function createDemoOrder(input: {
 }
 
 export function getDemoAssignedOrder(order: Order): Order {
+  const driver = DEMO_DRIVERS[order.tariff ?? "standard"] ?? DEMO_DRIVERS.standard;
   return {
     ...order,
     status: "driver_assigned",
-    eta_minutes: 4,
-    driver: DEMO_DRIVER,
+    eta_minutes: order.tariff === "economy" ? 3 : order.tariff === "comfort" ? 7 : 4,
+    driver,
   };
 }
