@@ -25,6 +25,43 @@
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const { Wallet: LuWallet, Coins: LuCoins, Handshake: LuHandshake, X: LuX, Check: LuCheck, Users: LuUsers, Download: LuDownload, Share2: LuShare, CreditCard: LuCard } = LucideReact;
 
+/* ── Demo car data per tariff ─────────── */
+const DEMO_CARS = {
+  economy: {
+    model:    'Lada Priora',
+    color:    'Серебристый',
+    colorDot: '#C0C0C0',
+    plate:    '458 КА 01',
+    driver:   'Даурен К.',
+    rating:   4.7,
+    trips:    198,
+    eta:      3,
+    gradient: `#4F46E5, #7C3AED`,
+  },
+  comfort: {
+    model:    'Chevrolet Cobalt',
+    color:    'Белый',
+    colorDot: '#E5E5EA',
+    plate:    '221 АВ 01',
+    driver:   'Сергей Н.',
+    rating:   4.8,
+    trips:    256,
+    eta:      5,
+    gradient: `${C.teal}, #00C4CF`,
+  },
+  business: {
+    model:    'Toyota Camry',
+    color:    'Чёрный',
+    colorDot: '#3A3A3C',
+    plate:    '777 АА 01',
+    driver:   'Алексей М.',
+    rating:   4.9,
+    trips:    312,
+    eta:      7,
+    gradient: `${C.org}, #FF8C40`,
+  },
+};
+
 /* ═══════════════════════════════════════════
    §1 — MAP MARKER FACTORIES
 ═══════════════════════════════════════════ */
@@ -168,32 +205,34 @@ function Handle() {
   return <div style={{ width:40, height:4, borderRadius:2, background:C.bdr, margin:'10px auto 0' }} />;
 }
 
-function DriverInfo({ compact }) {
+function DriverInfo({ compact, car }) {
+  const c = car || DEMO_CARS.business;
+  const stars = Math.round(c.rating);
   return (
     <div style={{ display:'flex', gap:14, alignItems:'center' }}>
       <div style={{ position:'relative', flexShrink:0 }}>
-        <div style={{ width:compact?48:58, height:compact?48:58, borderRadius:compact?24:29, background:`linear-gradient(135deg,${C.org},#FF8C40)`, display:'flex', alignItems:'center', justifyContent:'center' }}>
+        <div style={{ width:compact?48:58, height:compact?48:58, borderRadius:compact?24:29, background:`linear-gradient(135deg,${c.gradient})`, display:'flex', alignItems:'center', justifyContent:'center' }}>
           <Ico.user s={compact?22:28} />
         </div>
         <div style={{ position:'absolute', bottom:1, right:1, width:14, height:14, borderRadius:7, background:C.ok, border:`2px solid white` }} />
       </div>
       <div style={{ flex:1, minWidth:0 }}>
-        <div style={{ fontSize:compact?14:16, fontWeight:700, color:C.dk }}>Алексей М.</div>
+        <div style={{ fontSize:compact?14:16, fontWeight:700, color:C.dk }}>{c.driver}</div>
         <div style={{ display:'flex', gap:3, alignItems:'center', marginTop:3 }}>
-          {[1,2,3,4,5].map(s => <Ico.star key={s} filled={s<=5} s={compact?12:14} />)}
-          <span style={{ fontSize:11, color:C.gray, marginLeft:3 }}>4.9 · 312 поездок</span>
+          {[1,2,3,4,5].map(s => <Ico.star key={s} filled={s<=stars} s={compact?12:14} />)}
+          <span style={{ fontSize:11, color:C.gray, marginLeft:3 }}>{c.rating} · {c.trips} поездок</span>
         </div>
         {!compact && (
           <div style={{ display:'flex', gap:6, marginTop:6 }}>
-            <span style={{ background:C.bg, borderRadius:8, padding:'3px 10px', fontSize:12, fontWeight:600, color:C.dkMid }}>Toyota Camry</span>
-            <span style={{ background:C.bg, borderRadius:8, padding:'3px 10px', fontSize:12, fontWeight:700, color:C.dk, letterSpacing:.8 }}>777 AA 01</span>
+            <span style={{ background:C.bg, borderRadius:8, padding:'3px 10px', fontSize:12, fontWeight:600, color:C.dkMid }}>{c.model}</span>
+            <span style={{ background:C.bg, borderRadius:8, padding:'3px 10px', fontSize:12, fontWeight:700, color:C.dk, letterSpacing:.8 }}>{c.plate}</span>
           </div>
         )}
       </div>
       {compact && (
         <div style={{ textAlign:'right', flexShrink:0 }}>
           <div style={{ fontSize:11, color:C.gray }}>Номер</div>
-          <div style={{ fontSize:13, fontWeight:800, color:C.dk, letterSpacing:.8 }}>777 AA 01</div>
+          <div style={{ fontSize:13, fontWeight:800, color:C.dk, letterSpacing:.8 }}>{c.plate}</div>
         </div>
       )}
     </div>
@@ -1073,9 +1112,9 @@ function DetailsScreen({ qr, dest, destCoord, tariff, onNext, onBack }) {
           </div>
           <div style={{ display:'flex', gap:8, marginTop:16 }}>
             {[
-              { i:<Ico.mapPin s={18} c={C.org}/>, v:`${km} км`, l:'Расстояние' },
-              { i:<Ico.clock  s={18} c={C.teal}/>,v:`${min} мин`,l:'Время' },
-              { i:<Ico.taxi   s={18} c={C.dk}/>,  v:'~4 мин',   l:'Ожидание' },
+              { i:<Ico.mapPin s={18} c={C.org}/>, v:`${km} км`,                        l:'Расстояние' },
+              { i:<Ico.clock  s={18} c={C.teal}/>,v:`${min} мин`,                      l:'Время' },
+              { i:<Ico.taxi   s={18} c={C.dk}/>,  v:`~${DEMO_CARS[tariff].eta} мин`,   l:'Ожидание' },
             ].map((s, i) => (
               <div key={i} style={{ flex:1, background:C.bg, borderRadius:12, padding:'10px 6px', textAlign:'center' }}>
                 <div style={{ marginBottom:4, display:'flex', justifyContent:'center' }}>{s.i}</div>
@@ -1089,18 +1128,18 @@ function DetailsScreen({ qr, dest, destCoord, tariff, onNext, onBack }) {
         {/* Driver info */}
         <Card style={{ padding:'16px' }}>
           <div style={{ fontSize:11, fontWeight:700, color:C.gray, textTransform:'uppercase', letterSpacing:.8, marginBottom:14 }}>Водитель</div>
-          <DriverInfo />
+          <DriverInfo car={DEMO_CARS[tariff]} />
           <div style={{ marginTop:14, padding:'12px 14px', background:C.bg, borderRadius:14, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
             <div style={{ display:'flex', alignItems:'center', gap:10 }}>
               <Ico.car />
               <div>
-                <div style={{ fontSize:13, fontWeight:700, color:C.dk }}>Toyota Camry · Белый</div>
-                <div style={{ fontSize:12, color:C.gray }}>Гос. номер: <b style={{ color:C.dk, letterSpacing:.8 }}>777 AA 01</b></div>
+                <div style={{ fontSize:13, fontWeight:700, color:C.dk }}>{DEMO_CARS[tariff].model} · {DEMO_CARS[tariff].color}</div>
+                <div style={{ fontSize:12, color:C.gray }}>Гос. номер: <b style={{ color:C.dk, letterSpacing:.8 }}>{DEMO_CARS[tariff].plate}</b></div>
               </div>
             </div>
             <div style={{ textAlign:'right' }}>
               <div style={{ fontSize:10, color:C.gray }}>Прибудет</div>
-              <div style={{ fontSize:20, fontWeight:900, color:C.org }}>4 мин</div>
+              <div style={{ fontSize:20, fontWeight:900, color:C.org }}>~{DEMO_CARS[tariff].eta} мин</div>
             </div>
           </div>
         </Card>
@@ -1332,7 +1371,7 @@ function SearchingScreen({ onNext }) {
             </div>
           </div>
           <h2 style={{ fontSize:26, fontWeight:900, color:C.ok }}>Водитель найден!</h2>
-          <p style={{ fontSize:14, color:C.gray, marginTop:8 }}>Алексей едет к вам · 4 минуты</p>
+          <p style={{ fontSize:14, color:C.gray, marginTop:8 }}>Водитель едет к вам</p>
         </div>
       )}
     </div>
@@ -1524,17 +1563,18 @@ function generateTicket(canvas, { orderId, plate, model, color, driver, pickup }
   ctx.textAlign = 'left';
 }
 
-function OfflineTicketModal({ qr, onClose }) {
+function OfflineTicketModal({ qr, car, onClose }) {
   const canvasRef  = useRef(null);
   const orderId    = useMemo(() => 'ORD-' + Math.random().toString(36).slice(2,8).toUpperCase(), []);
   const [saved, setSaved] = useState(false);
+  const c = car || DEMO_CARS.business;
 
   const ticketData = {
     orderId,
-    plate:  '777 АА 01',
-    model:  'Toyota Camry',
-    color:  'Белый',
-    driver: 'Алексей М.',
+    plate:  c.plate,
+    model:  c.model,
+    color:  c.color,
+    driver: c.driver,
     pickup: qr.name,
   };
 
@@ -1617,8 +1657,9 @@ function OfflineTicketModal({ qr, onClose }) {
    ТЗ §3.5 — «водитель назначен» + «водитель прибыл»
    Two internal states: driving → arrived
 ═══════════════════════════════════════════ */
-function DriverScreen({ qr, onStart, onCancel }) {
-  const [eta,        setEta]        = useState(4);
+function DriverScreen({ qr, tariff, onStart, onCancel }) {
+  const car = DEMO_CARS[tariff] || DEMO_CARS.business;
+  const [eta,        setEta]        = useState(car.eta);
   const [arrived,    setArrived]    = useState(false);
   const [showTicket, setShowTicket] = useState(false);
 
@@ -1634,7 +1675,7 @@ function DriverScreen({ qr, onStart, onCancel }) {
 
   return (
     <div className="su" style={{ display:'flex', flexDirection:'column', height:'100dvh', background:C.bg, overflow:'hidden' }}>
-      {showTicket && <OfflineTicketModal qr={qr} onClose={() => setShowTicket(false)} />}
+      {showTicket && <OfflineTicketModal qr={qr} car={car} onClose={() => setShowTicket(false)} />}
 
       {/* Map */}
       <div style={{ flexShrink:0, position:'relative' }}>
@@ -1686,13 +1727,13 @@ function DriverScreen({ qr, onStart, onCancel }) {
 
           {/* Driver card */}
           <Card style={{ padding:'16px', marginBottom:12 }}>
-            <DriverInfo />
+            <DriverInfo car={car} />
             <div style={{ height:1, background:C.bdr, margin:'16px 0' }} />
             <div style={{ display:'flex', justifyContent:'space-around' }}>
               {[
-                { e:<Ico.car/>,  l:'Toyota Camry' },
-                { e:<Ico.dot s={18} c='#E5E5EA'/>, l:'Белый' },
-                { e:<Ico.hash s={18}/>, l:'777 AA 01', m:true },
+                { e:<Ico.car/>,                           l:car.model },
+                { e:<Ico.dot s={18} c={car.colorDot}/>,   l:car.color },
+                { e:<Ico.hash s={18}/>,                   l:car.plate, m:true },
               ].map((s, i) => (
                 <div key={i} style={{ textAlign:'center' }}>
                   <div style={{ marginBottom:4, display:'flex', justifyContent:'center' }}>{s.e}</div>
@@ -2011,7 +2052,7 @@ function App() {
       <SearchingScreen onNext={() => go('driver')} />
     ),
     driver: (
-      <DriverScreen qr={qr} onStart={() => go('trip')} onCancel={() => go('welcome')} />
+      <DriverScreen qr={qr} tariff={tariff} onStart={() => go('trip')} onCancel={() => go('welcome')} />
     ),
     trip: (
       <TripScreen qr={qr} dest={dest} destCoord={destCoord} onEnd={() => go('completed')} />
