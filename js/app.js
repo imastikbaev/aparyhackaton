@@ -23,7 +23,7 @@
 // C, API, IS_DEV, getQRParams, UKA_ADDRESSES, searchLocal
 
 const { useState, useEffect, useRef, useCallback, useMemo } = React;
-const { Wallet: LuWallet, Coins: LuCoins, Handshake: LuHandshake, X: LuX, Check: LuCheck, Users: LuUsers } = LucideReact;
+const { Wallet: LuWallet, Coins: LuCoins, Handshake: LuHandshake, X: LuX, Check: LuCheck, Users: LuUsers, Download: LuDownload, Share2: LuShare, CreditCard: LuCard } = LucideReact;
 
 /* ═══════════════════════════════════════════
    §1 — MAP MARKER FACTORIES
@@ -1340,13 +1340,287 @@ function SearchingScreen({ onNext }) {
 }
 
 /* ═══════════════════════════════════════════
+   §10b — OFFLINE TICKET GENERATOR
+   Рисует PNG-билет через Canvas 2D API.
+   Без интернета — данные остаются в галерее.
+═══════════════════════════════════════════ */
+function generateTicket(canvas, { orderId, plate, model, color, driver, pickup }) {
+  const W = 390, H = 620;
+  canvas.width  = W * 2; // retina
+  canvas.height = H * 2;
+  canvas.style.width  = W + 'px';
+  canvas.style.height = H + 'px';
+
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2); // retina
+
+  const R = 24; // corner radius
+  const org = '#FC6500', dk = '#2A3037', gray = '#8A95A3', bdr = '#E8ECF0', bg = '#F5F6FA';
+  const now = new Date();
+  const timeStr = now.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+  const dateStr = now.toLocaleDateString('ru-RU', { day:'numeric', month:'long', year:'numeric' });
+
+  /* ── helpers ── */
+  function roundRect(x, y, w, h, r, fill) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  }
+
+  /* ── card background ── */
+  roundRect(0, 0, W, H, R, 'white');
+  ctx.shadowColor = 'rgba(0,0,0,.12)';
+  ctx.shadowBlur  = 24;
+  ctx.shadowOffsetY = 6;
+  roundRect(2, 2, W - 4, H - 4, R, 'white');
+  ctx.shadowColor = 'transparent';
+
+  /* ── orange header ── */
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(R, 0); ctx.lineTo(W - R, 0);
+  ctx.quadraticCurveTo(W, 0, W, R);
+  ctx.lineTo(W, 140); ctx.lineTo(0, 140); ctx.lineTo(0, R);
+  ctx.quadraticCurveTo(0, 0, R, 0);
+  ctx.closePath();
+  ctx.fillStyle = org; ctx.fill();
+  ctx.restore();
+
+  /* ── header: APARU label ── */
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 26px Inter, -apple-system, sans-serif';
+  ctx.fillText('APARU', 24, 46);
+
+  ctx.font = '500 12px Inter, -apple-system, sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,.75)';
+  ctx.fillText('Такси по QR', 24, 64);
+
+  /* ── header: БИЛЕТ badge ── */
+  roundRect(W - 110, 20, 86, 32, 8, 'rgba(255,255,255,.22)');
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 11px Inter, -apple-system, sans-serif';
+  ctx.fillText('OFFLINE', W - 96, 40);
+
+  /* ── header: order id ── */
+  ctx.fillStyle = 'rgba(255,255,255,.9)';
+  ctx.font = '500 12px Inter, -apple-system, sans-serif';
+  ctx.fillText('Номер заказа', 24, 96);
+  ctx.fillStyle = 'white';
+  ctx.font = 'bold 18px Inter, -apple-system, sans-serif';
+  ctx.fillText(orderId, 24, 118);
+
+  /* ── tear line ── */
+  ctx.strokeStyle = bdr;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(24, 152); ctx.lineTo(W - 24, 152); ctx.stroke();
+  ctx.setLineDash([]);
+
+  /* ── circles on tear line ── */
+  [0, W].forEach(cx => {
+    ctx.beginPath();
+    ctx.arc(cx, 152, 14, 0, Math.PI * 2);
+    ctx.fillStyle = bg; ctx.fill();
+  });
+
+  /* ── "ВАША МАШИНА" label ── */
+  ctx.fillStyle = gray;
+  ctx.font = 'bold 11px Inter, -apple-system, sans-serif';
+  ctx.letterSpacing = '0.8px';
+  ctx.fillText('ВАША МАШИНА', 24, 185);
+  ctx.letterSpacing = '0px';
+
+  /* ── plate number block ── */
+  roundRect(24, 196, W - 48, 68, 14, org + '14');
+  ctx.strokeStyle = org;
+  ctx.lineWidth = 1.5;
+  roundRect(24, 196, W - 48, 68, 14);
+  ctx.stroke();
+
+  ctx.fillStyle = dk;
+  ctx.font = 'bold 38px Inter, -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.letterSpacing = '2px';
+  ctx.fillText(plate, W / 2, 242);
+  ctx.letterSpacing = '0px';
+  ctx.textAlign = 'left';
+
+  /* ── model + color ── */
+  ctx.fillStyle = gray;
+  ctx.font = '500 13px Inter, -apple-system, sans-serif';
+  ctx.fillText('Модель', 24, 290);
+  ctx.fillStyle = gray;
+  ctx.fillText('Цвет', W / 2 + 8, 290);
+
+  ctx.fillStyle = dk;
+  ctx.font = 'bold 16px Inter, -apple-system, sans-serif';
+  ctx.fillText(model, 24, 312);
+  ctx.fillText(color, W / 2 + 8, 312);
+
+  /* ── divider ── */
+  ctx.strokeStyle = bdr; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(24, 330); ctx.lineTo(W - 24, 330); ctx.stroke();
+
+  /* ── driver ── */
+  ctx.fillStyle = gray;
+  ctx.font = '500 12px Inter, -apple-system, sans-serif';
+  ctx.fillText('Водитель', 24, 355);
+
+  ctx.fillStyle = dk;
+  ctx.font = 'bold 16px Inter, -apple-system, sans-serif';
+  ctx.fillText(driver, 24, 376);
+
+  /* stars */
+  ctx.fillStyle = org;
+  ctx.font = '14px Arial';
+  ctx.fillText('★★★★★', 24, 396);
+
+  /* ── divider ── */
+  ctx.strokeStyle = bdr;
+  ctx.beginPath(); ctx.moveTo(24, 412); ctx.lineTo(W - 24, 412); ctx.stroke();
+
+  /* ── pickup ── */
+  ctx.fillStyle = gray;
+  ctx.font = '500 12px Inter, -apple-system, sans-serif';
+  ctx.fillText('Место посадки', 24, 436);
+
+  ctx.fillStyle = dk;
+  ctx.font = 'bold 14px Inter, -apple-system, sans-serif';
+  // wrap long pickup name
+  const maxW = W - 48;
+  const words = pickup.split(' ');
+  let line = '', y = 458;
+  words.forEach(word => {
+    const test = line + word + ' ';
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line.trim(), 24, y); line = word + ' '; y += 20;
+    } else { line = test; }
+  });
+  ctx.fillText(line.trim(), 24, y);
+
+  /* ── time ── */
+  ctx.fillStyle = gray;
+  ctx.font = '500 12px Inter, -apple-system, sans-serif';
+  ctx.fillText(timeStr + ' · ' + dateStr, 24, y + 26);
+
+  /* ── footer ── */
+  roundRect(0, H - 54, W, 54, R, bg);
+  ctx.fillStyle = gray;
+  ctx.font = '500 12px Inter, -apple-system, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Покажите карточку водителю', W / 2, H - 30);
+  ctx.fillStyle = org;
+  ctx.font = 'bold 11px Inter, -apple-system, sans-serif';
+  ctx.fillText('aparu.kz', W / 2, H - 13);
+  ctx.textAlign = 'left';
+}
+
+function OfflineTicketModal({ qr, onClose }) {
+  const canvasRef  = useRef(null);
+  const orderId    = useMemo(() => 'ORD-' + Math.random().toString(36).slice(2,8).toUpperCase(), []);
+  const [saved, setSaved] = useState(false);
+
+  const ticketData = {
+    orderId,
+    plate:  '777 АА 01',
+    model:  'Toyota Camry',
+    color:  'Белый',
+    driver: 'Алексей М.',
+    pickup: qr.name,
+  };
+
+  useEffect(() => {
+    if (canvasRef.current) generateTicket(canvasRef.current, ticketData);
+  }, []);
+
+  const handleSave = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Try Web Share API first (mobile — saves to gallery)
+    if (navigator.share && navigator.canShare) {
+      try {
+        const blob = await new Promise(res => canvas.toBlob(res, 'image/png'));
+        const file = new File([blob], `aparu-${orderId}.png`, { type:'image/png' });
+        if (navigator.canShare({ files:[file] })) {
+          await navigator.share({ files:[file], title:'APARU билет', text:'Мой заказ такси' });
+          setSaved(true); return;
+        }
+      } catch(e) { /* fallback */ }
+    }
+
+    // Fallback: download link
+    const link = document.createElement('a');
+    link.download = `aparu-${orderId}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    setSaved(true);
+  };
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:4000, display:'flex', flexDirection:'column', justifyContent:'flex-end' }}>
+      <div onClick={onClose} style={{ position:'absolute', inset:0, background:'rgba(0,0,0,.55)' }} />
+      <div className="su" style={{ position:'relative', background:C.white, borderRadius:'24px 24px 0 0', zIndex:1, maxHeight:'92dvh', display:'flex', flexDirection:'column' }}>
+        <Handle />
+
+        {/* Header */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'4px 20px 16px' }}>
+          <div>
+            <div style={{ fontSize:18, fontWeight:800, color:C.dk }}>Оффлайн-карточка</div>
+            <div style={{ fontSize:12, color:C.gray, marginTop:2 }}>Сохраните — работает без интернета</div>
+          </div>
+          <button onClick={onClose} style={{ background:C.bg, border:'none', borderRadius:12, width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer' }}>
+            <LuX size={18} color={C.gray}/>
+          </button>
+        </div>
+
+        {/* Canvas preview */}
+        <div style={{ overflowY:'auto', padding:'0 20px', flex:1 }}>
+          <div style={{ borderRadius:24, overflow:'hidden', boxShadow:C.shd }}>
+            <canvas ref={canvasRef} style={{ display:'block', width:'100%' }} />
+          </div>
+
+          {/* Info tip */}
+          <div style={{ display:'flex', gap:10, alignItems:'flex-start', marginTop:14, background:C.bg, borderRadius:14, padding:'12px 14px' }}>
+            <LuCard size={16} color={C.teal} style={{ flexShrink:0, marginTop:1 }}/>
+            <span style={{ fontSize:12, color:C.gray, lineHeight:1.6 }}>
+              Если пропадёт интернет — покажите водителю номер авто и гос.номер с этой карточки
+            </span>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div style={{ padding:'16px 20px 32px', display:'flex', flexDirection:'column', gap:10 }}>
+          <PrimaryBtn onClick={handleSave} style={saved ? { background:`linear-gradient(135deg,${C.ok},#15803D)`, boxShadow:`0 6px 20px rgba(22,163,74,.35)` } : {}}>
+            <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+              {saved ? <><LuCheck size={18}/> Сохранено!</> : <><LuDownload size={18}/> Сохранить в галерею</>}
+            </span>
+          </PrimaryBtn>
+          <GhostBtn onClick={onClose}>Закрыть</GhostBtn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════
    §11 — SCREEN 6: DRIVER EN ROUTE + ARRIVED
    ТЗ §3.5 — «водитель назначен» + «водитель прибыл»
    Two internal states: driving → arrived
 ═══════════════════════════════════════════ */
 function DriverScreen({ qr, onStart, onCancel }) {
-  const [eta,     setEta]     = useState(4);       // minutes countdown
-  const [arrived, setArrived] = useState(false);   // true = driver arrived
+  const [eta,        setEta]        = useState(4);
+  const [arrived,    setArrived]    = useState(false);
+  const [showTicket, setShowTicket] = useState(false);
 
   // ETA countdown — auto-transition to "arrived" when it hits 0
   useEffect(() => {
@@ -1360,6 +1634,7 @@ function DriverScreen({ qr, onStart, onCancel }) {
 
   return (
     <div className="su" style={{ display:'flex', flexDirection:'column', height:'100dvh', background:C.bg, overflow:'hidden' }}>
+      {showTicket && <OfflineTicketModal qr={qr} onClose={() => setShowTicket(false)} />}
 
       {/* Map */}
       <div style={{ flexShrink:0, position:'relative' }}>
@@ -1438,6 +1713,21 @@ function DriverScreen({ qr, onStart, onCancel }) {
               </button>
             ))}
           </div>
+
+          {/* Offline ticket button */}
+          <button
+            onClick={() => setShowTicket(true)}
+            style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'12px 16px', marginBottom:12, borderRadius:14, border:`1.5px dashed ${C.bdr}`, background:C.bg, cursor:'pointer', transition:'all .15s' }}
+          >
+            <div style={{ width:36, height:36, borderRadius:10, background:C.white, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:C.shdSm, flexShrink:0 }}>
+              <LuDownload size={16} color={C.org}/>
+            </div>
+            <div style={{ flex:1, textAlign:'left' }}>
+              <div style={{ fontSize:13, fontWeight:700, color:C.dk }}>Сохранить карточку заказа</div>
+              <div style={{ fontSize:11, color:C.gray, marginTop:1 }}>Номер авто · Гос.номер · Без интернета</div>
+            </div>
+            <LuCard size={16} color={C.grayLt}/>
+          </button>
 
           {/* CTA changes based on arrived state — ТЗ §3.5 */}
           {arrived ? (
