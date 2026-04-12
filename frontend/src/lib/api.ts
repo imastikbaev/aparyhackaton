@@ -6,6 +6,7 @@ import type {
   QRPoint,
   ReverseGeocodeResponse,
   RouteResponse,
+  AdminOrder,
   TokenResponse,
 } from "@/types";
 import { createDemoOrder, DEMO_QR_POINT, isDemoQrId, isDemoToken } from "@/lib/demo";
@@ -110,6 +111,9 @@ export const getOrder = (orderId: number, token: string) =>
 
 export const cancelOrder = (orderId: number, token: string) =>
   request<Order>(`/orders/${orderId}/cancel`, { method: "POST", token });
+
+export const getAdminOrders = (key: string, limit = 100) =>
+  request<AdminOrder[]>(`/admin/orders?key=${encodeURIComponent(key)}&limit=${limit}`);
 
 // ─── Maps (прокси через наш бэкенд) ─────────────────────────────────────────
 

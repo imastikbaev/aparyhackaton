@@ -56,6 +56,21 @@ export interface Order {
   created_at: string;
 }
 
+export interface AdminOrder {
+  id: number;
+  status: OrderStatus;
+  pickup_address: string;
+  destination_address: string | null;
+  tariff: string;
+  payment_method: PaymentMethod;
+  price_estimate: number | null;
+  created_at: string;
+  user_phone: string;
+  qr_point_name: string;
+  driver_name: string | null;
+  car_number: string | null;
+}
+
 export interface OrderCreate {
   qr_point_id: string;
   destination_address?: string;

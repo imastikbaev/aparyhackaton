@@ -26,6 +26,19 @@ class OrderRepository(BaseRepository[Order]):
         )
         return list(result.scalars().all())
 
+    async def get_recent_with_relations(self, limit: int = 100) -> list[Order]:
+        result = await self.session.execute(
+            select(Order)
+            .options(
+                selectinload(Order.driver),
+                selectinload(Order.qr_point),
+                selectinload(Order.user),
+            )
+            .order_by(Order.created_at.desc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
     async def update_status(self, order: Order, status: OrderStatus) -> Order:
         order.status = status
         self.session.add(order)

@@ -37,3 +37,20 @@ class OrderOut(BaseModel):
 class OrderStatusUpdate(BaseModel):
     status: OrderStatus
     eta_minutes: int | None = None
+
+
+class AdminOrderOut(BaseModel):
+    id: int
+    status: OrderStatus
+    pickup_address: str
+    destination_address: str | None
+    tariff: str
+    payment_method: PaymentMethod
+    price_estimate: float | None
+    created_at: datetime
+    user_phone: str
+    qr_point_name: str
+    driver_name: str | None
+    car_number: str | None
+
+    model_config = {"from_attributes": True}

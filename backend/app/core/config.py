@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
 
+    # Read-only admin dashboard
+    ADMIN_DASHBOARD_KEY: str = "aparu-admin"
+
     # SMS (пример: Twilio)
     SMS_PROVIDER: str = "mock"  # "twilio" | "mock"
     TWILIO_ACCOUNT_SID: str = ""
