@@ -3,8 +3,9 @@
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { Car, Flag, MapPinned, MessageCircleMore, Send, Share2, XCircle } from "lucide-react";
+import { Car, Flag, MapPinned, MessageCircleMore, Send, Share2, Ticket, XCircle } from "lucide-react";
 import { DriverCard } from "@/components/order/DriverCard";
+import { OfflineTicketCard } from "@/components/order/OfflineTicketCard";
 import { OrderStatusBar } from "@/components/order/OrderStatus";
 import { TripInfo } from "@/components/order/TripInfo";
 import { Button } from "@/components/ui/Button";
@@ -26,6 +27,7 @@ export default function OrderPage() {
   const { currentOrder, currentQRPoint, patchOrder, reset, token, updateOrderStatus } = useOrderStore();
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [showOfflineTicket, setShowOfflineTicket] = useState(false);
 
   useOrderStatus(Number(orderId));
 
@@ -182,6 +184,26 @@ export default function OrderPage() {
           <DriverCard driver={currentOrder.driver} etaMinutes={currentOrder.eta_minutes} />
         )}
 
+        {currentOrder.driver && currentOrder.status !== "searching" && currentOrder.status !== "trip_completed" && (
+          <div className="aparu-card p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-[var(--aparu-orange-soft)]">
+                <Ticket size={20} color="#FF6B00" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-[var(--aparu-ink)]">Оффлайн-карточка</p>
+                <p className="mt-1 text-sm text-[var(--aparu-muted)]">
+                  Сохраните данные водителя — карточка работает без интернета.
+                </p>
+              </div>
+            </div>
+            <Button className="mt-4" variant="secondary" size="lg" onClick={() => setShowOfflineTicket(true)}>
+              <Ticket size={16} />
+              Сохранить карточку
+            </Button>
+          </div>
+        )}
+
         {currentOrder.driver && shareUrl && currentOrder.status !== "trip_completed" && (
           <div className="aparu-card p-4">
             <div className="flex items-start gap-3">
@@ -242,6 +264,15 @@ export default function OrderPage() {
 
         <TripInfo order={currentOrder} />
       </div>
+
+      {showOfflineTicket && currentOrder.driver && (
+        <OfflineTicketCard
+          orderId={currentOrder.id}
+          driver={currentOrder.driver}
+          pickupAddress={currentOrder.pickup_address}
+          onClose={() => setShowOfflineTicket(false)}
+        />
+      )}
     </div>
   );
 }
