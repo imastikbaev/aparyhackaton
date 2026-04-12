@@ -29,11 +29,34 @@ function VerifyForm() {
   };
 
   const handleDigit = (index: number, val: string) => {
-    const digit = val.replace(/\D/g, "").slice(-1);
+    const normalized = val.replace(/\D/g, "");
+
+    // Safari/iOS OTP autofill can drop the whole code into a single field.
+    if (normalized.length > 1) {
+      const next = normalized.slice(0, 4).split("");
+      while (next.length < 4) next.push("");
+      setCodeDigits(next);
+      const focusIndex = Math.min(normalized.length, 4) - 1;
+      inputRefs.current[Math.max(focusIndex, 0)]?.focus();
+      return;
+    }
+
+    const digit = normalized.slice(-1);
     const next = [...codeDigits];
     next[index] = digit;
     setCodeDigits(next);
     if (digit && index < 3) inputRefs.current[index + 1]?.focus();
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
+    if (!pasted) return;
+    e.preventDefault();
+
+    const next = pasted.split("");
+    while (next.length < 4) next.push("");
+    setCodeDigits(next);
+    inputRefs.current[Math.min(pasted.length, 4) - 1]?.focus();
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -122,7 +145,9 @@ function VerifyForm() {
                   value={digit}
                   onChange={(e) => handleDigit(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
+                  onPaste={handlePaste}
                   autoFocus={i === 0}
+                  autoComplete={i === 0 ? "one-time-code" : undefined}
                   className="h-16 w-16 rounded-[22px] bg-[var(--aparu-surface-soft)] text-center text-[28px] font-bold text-[var(--aparu-ink)] outline-none transition-all focus:bg-white focus:ring-2 focus:ring-[var(--aparu-orange)]/35"
                 />
               ))}
