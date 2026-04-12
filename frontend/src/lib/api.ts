@@ -9,7 +9,7 @@ import type {
   AdminOrder,
   TokenResponse,
 } from "@/types";
-import { createDemoOrder, DEMO_QR_POINT, isDemoQrId, isDemoToken } from "@/lib/demo";
+import { DEMO_QR_POINT, isDemoQrId } from "@/lib/demo";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api/v1";
 const MAPS_BASE_URL = "/api/v1/maps";
@@ -81,30 +81,18 @@ export const getQRPoint = (qrId: string) =>
 // ─── Orders ──────────────────────────────────────────────────────────────────
 
 export const createOrder = (data: OrderCreate, token: string) =>
-  isDemoToken(token) || isDemoQrId(data.qr_point_id)
-    ? Promise.resolve(
-        createDemoOrder({
-          destinationAddress: data.destination_address,
-          destinationLat: data.destination_lat,
-          destinationLon: data.destination_lon,
-          stopovers: data.stopovers,
-          paymentMethod: data.payment_method,
-          tariff: data.tariff,
-          comment: data.comment,
-        }),
-      )
-    : request<Order>("/orders", {
-        method: "POST",
-        body: JSON.stringify({
-          qr_point_id: data.qr_point_id,
-          destination_address: data.destination_address,
-          destination_lat: data.destination_lat,
-          destination_lon: data.destination_lon,
-          tariff: data.tariff,
-          payment_method: data.payment_method,
-        }),
-        token,
-      });
+  request<Order>("/orders", {
+    method: "POST",
+    body: JSON.stringify({
+      qr_point_id: data.qr_point_id,
+      destination_address: data.destination_address,
+      destination_lat: data.destination_lat,
+      destination_lon: data.destination_lon,
+      tariff: data.tariff,
+      payment_method: data.payment_method,
+    }),
+    token,
+  });
 
 export const getOrder = (orderId: number, token: string) =>
   request<Order>(`/orders/${orderId}`, { token });

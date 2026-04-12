@@ -16,7 +16,7 @@ function VerifyForm() {
   const nextPath = searchParams.get("next") ?? "/";
   const demoMode = nextPath.includes("/scan/") && isDemoQrId(nextPath.split("/scan/")[1]?.split("?")[0] ?? "");
 
-  const { step, phone, loading, error, devCode, requestOTP, confirmOTP } = useAuth(demoMode);
+  const { step, phone, loading, error, devCode, requestOTP, confirmOTP } = useAuth();
   const [phoneInput, setPhoneInput] = useState("+7");
   const [codeDigits, setCodeDigits] = useState(["", "", "", ""]);
 
@@ -66,7 +66,7 @@ function VerifyForm() {
             </p>
             {demoMode && (
               <p className="mt-2 text-xs text-[#FF6B00]">
-                Демо-режим: можно использовать тестовый код без живого backend
+                Демо-режим: заказ сохранится в БД, а тестовый код появится на экране в mock-режиме
               </p>
             )}
           </div>

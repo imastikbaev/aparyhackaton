@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useOrderStatus } from "@/hooks/useOrderStatus";
 import { cancelOrder } from "@/lib/api";
-import { isDemoToken } from "@/lib/demo";
+import { isDemoQrId, isDemoToken } from "@/lib/demo";
 import { createSharedTripPayload, getSharedTripState, getSharedTripUrl } from "@/lib/tripShare";
 import { useOrderStore } from "@/store/orderStore";
 
@@ -46,7 +46,8 @@ export default function OrderPage() {
     );
   }
 
-  const isDemo = isDemoToken(token);
+  const isDemo = isDemoQrId(currentQRPoint?.id ?? "") || isDemoToken(token);
+  const isLegacyDemoToken = isDemoToken(token);
   const sharePayload = useMemo(
     () => (currentOrder ? createSharedTripPayload(currentOrder) : null),
     [currentOrder],
@@ -126,11 +127,11 @@ export default function OrderPage() {
 
     setCancelLoading(true);
     try {
-      if (isDemo) {
-        patchOrder({ status: "cancelled", eta_minutes: 0 });
-      } else if (token) {
+      if (token && !isLegacyDemoToken) {
         const cancelled = await cancelOrder(currentOrder.id, token);
         patchOrder(cancelled);
+      } else if (isDemo) {
+        patchOrder({ status: "cancelled", eta_minutes: 0 });
       }
       reset();
       if (currentQRPoint) {

@@ -3,19 +3,21 @@
 import { useEffect, useRef } from "react";
 
 import { getOrderWsUrl } from "@/lib/api";
-import { getDemoAssignedOrder, isDemoToken } from "@/lib/demo";
+import { getDemoAssignedOrder, isDemoQrId, isDemoToken } from "@/lib/demo";
 import { useOrderStore } from "@/store/orderStore";
 import type { WSStatusEvent } from "@/types";
 
 export function useOrderStatus(orderId: number | null) {
-  const { currentOrder, token, setOrder, updateOrderStatus } = useOrderStore();
+  const { currentOrder, currentQRPoint, token, setOrder, updateOrderStatus } = useOrderStore();
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
     if (!orderId) return;
 
+    const isDemoFlow = isDemoQrId(currentQRPoint?.id ?? "") || isDemoToken(token);
+
     if (
-      isDemoToken(token) &&
+      isDemoFlow &&
       currentOrder?.id === orderId &&
       currentOrder.status === "searching"
     ) {
@@ -54,5 +56,5 @@ export function useOrderStatus(orderId: number | null) {
       ws.close();
       wsRef.current = null;
     };
-  }, [currentOrder, orderId, setOrder, token, updateOrderStatus]);
+  }, [currentOrder, currentQRPoint, orderId, setOrder, token, updateOrderStatus]);
 }
