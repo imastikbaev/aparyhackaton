@@ -333,33 +333,29 @@ export function OfflineTicketCard({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end">
-      <div className="absolute inset-0 bg-black/55" onClick={onClose} />
-
-      <div className="relative z-10 flex max-h-[92dvh] flex-col rounded-t-[24px] bg-white">
-        <div className="flex justify-center pb-1 pt-3">
-          <div className="h-1 w-10 rounded-full bg-[#d6dee2]" />
-        </div>
-
-        <div className="flex items-center justify-between px-5 pb-4 pt-1">
-          <div>
-            <p className="text-[18px] font-extrabold text-[#2A3037]">Оффлайн-карточка</p>
-            <p className="mt-0.5 text-xs text-[#8A95A3]">Сохраните и показывайте даже без интернета</p>
+    <div className="fixed inset-0 z-[120] bg-[rgba(15,23,42,0.70)] backdrop-blur-[2px]">
+      <div className="flex h-full flex-col bg-[#F4F6F8]">
+        <div className="sticky top-0 z-10 border-b border-[#E8ECF0] bg-white/96 px-5 pb-4 pt-[max(env(safe-area-inset-top),16px)] backdrop-blur">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[18px] font-extrabold text-[#2A3037]">Оффлайн-карточка</p>
+              <p className="mt-0.5 text-xs text-[#8A95A3]">Сохраните и показывайте даже без интернета</p>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#F5F6FA]"
+              aria-label="Закрыть"
+            >
+              <X size={18} color="#8A95A3" />
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#F5F6FA]"
-            aria-label="Закрыть"
-          >
-            <X size={18} color="#8A95A3" />
-          </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 pb-6">
+        <div className="flex-1 overflow-y-auto px-4 pb-5 pt-4">
           <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
 
-          <div className="overflow-hidden rounded-[24px] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+          <div className="mx-auto w-full max-w-[430px] overflow-hidden rounded-[28px] bg-white shadow-[0_14px_42px_rgba(24,39,75,0.16)]">
             {imageUrl ? (
               <img
                 src={imageUrl}
@@ -373,14 +369,14 @@ export function OfflineTicketCard({
             )}
           </div>
 
-          <div className="mt-3 flex items-start gap-2.5 rounded-[14px] bg-[#F5F6FA] px-4 py-3">
+          <div className="mx-auto mt-3 flex w-full max-w-[430px] items-start gap-2.5 rounded-[18px] bg-white px-4 py-3 shadow-[0_10px_28px_rgba(24,39,75,0.08)]">
             <CreditCard size={16} color="#009AA3" className="mt-0.5 shrink-0" />
-            <p className="text-xs leading-relaxed text-[#8A95A3]">
-              {hint}
-            </p>
+            <p className="text-xs leading-relaxed text-[#8A95A3]">{hint}</p>
           </div>
+        </div>
 
-          <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="sticky bottom-0 border-t border-[#E8ECF0] bg-white px-4 pb-[max(env(safe-area-inset-bottom),16px)] pt-3 shadow-[0_-16px_32px_rgba(24,39,75,0.08)]">
+          <div className="mx-auto grid w-full max-w-[430px] grid-cols-1 gap-2 sm:grid-cols-2">
             <button
               type="button"
               onClick={handleSave}
