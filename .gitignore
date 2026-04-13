@@ -45,3 +45,13 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# ─── Local Workspace Artifacts ───────────────────────────────────────────────
+.claude/
+APARU_Deploy_Guide.docx
+APARU_Hackathon_Pitch.pptx
+APARU_PLAN.md
+AddressSearch.jsx
+address-search-demo.html
+standalone.html
+aparu/
