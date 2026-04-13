@@ -43,7 +43,7 @@ export default function ScanPage() {
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [selectionMode, setSelectionMode] = useState<"pickup" | "destination" | null>(null);
   const [pickingLoading, setPickingLoading] = useState(false);
-  const [mapCollapsed, setMapCollapsed] = useState(false);
+  const [mapShrinkProgress, setMapShrinkProgress] = useState(0);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sheetRef = useRef<HTMLDivElement | null>(null);
@@ -283,19 +283,16 @@ export default function ScanPage() {
 
   const handleSheetScroll = () => {
     if (selectionMode) return;
-    const nextCollapsed = (sheetRef.current?.scrollTop ?? 0) > 32;
-    setMapCollapsed((prev) => (prev === nextCollapsed ? prev : nextCollapsed));
+    const scrollTop = sheetRef.current?.scrollTop ?? 0;
+    const nextProgress = Math.min(scrollTop / 140, 1);
+    setMapShrinkProgress((prev) =>
+      Math.abs(prev - nextProgress) < 0.02 ? prev : nextProgress
+    );
   };
 
-  useEffect(() => {
-    if (selectionMode) {
-      setMapCollapsed(false);
-      return;
-    }
-
-    const nextCollapsed = (sheetRef.current?.scrollTop ?? 0) > 32;
-    setMapCollapsed((prev) => (prev === nextCollapsed ? prev : nextCollapsed));
-  }, [selectionMode]);
+  const mapHeight = selectionMode
+    ? "46vh"
+    : `clamp(180px, calc(52vh - ${mapShrinkProgress * 26}vh), 52vh)`;
 
   const nearbyIcons: Record<NearbyPlaceCategory, typeof Building2> = {
     mall: Building2,
@@ -397,9 +394,8 @@ export default function ScanPage() {
     <div className="flex h-screen max-w-[430px] mx-auto flex-col overflow-hidden">
       {/* Карта (верхняя часть) */}
       <div
-        className={`relative z-0 shrink-0 overflow-hidden transition-[height] duration-300 ease-out ${
-          selectionMode ? "h-[46vh]" : mapCollapsed ? "h-[180px]" : "h-[46vh]"
-        }`}
+        className="relative z-0 shrink-0 overflow-hidden transition-[height] duration-150 ease-out"
+        style={{ height: mapHeight }}
       >
         <LeafletMap
           center={mapCenter ?? [qrPoint.latitude, qrPoint.longitude]}
