@@ -175,9 +175,6 @@ export default function OrderPage() {
       >
         <div className="sticky top-0 z-10 -mx-4 -mt-5 bg-white px-4 pt-5 pb-3">
           <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-[#d6dee2]" />
-          <p className="text-center text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--aparu-muted)]">
-            {mapCollapsed ? "Потяни вверх, чтобы раскрыть карту" : "Прокрути вниз, чтобы свернуть карту"}
-          </p>
         </div>
 
         <OrderStatusBar status={currentOrder.status} />

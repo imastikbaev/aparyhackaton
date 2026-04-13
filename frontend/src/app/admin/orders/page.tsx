@@ -40,17 +40,14 @@ export default function AdminOrdersPage() {
     <main className="min-h-screen bg-[#F4F6F8] px-4 py-6 text-[var(--aparu-ink)]">
       <div className="mx-auto max-w-5xl">
         <div className="mb-5 rounded-[28px] bg-white p-5 shadow-[0_18px_45px_rgba(24,39,75,0.08)]">
-          <p className="text-[24px] font-extrabold">Заказы из БД</p>
-          <p className="mt-1 text-sm text-[var(--aparu-muted)]">
-            Быстрый read-only просмотр последних заказов без прямого входа в PostgreSQL.
-          </p>
+          <p className="text-[24px] font-extrabold">База данных</p>
 
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
               type="password"
               value={key}
               onChange={(event) => setKey(event.target.value)}
-              placeholder="Ключ доступа"
+              placeholder="Ключ админа"
               className="h-12 flex-1 rounded-[18px] border border-[var(--aparu-line)] bg-white px-4 text-[15px] outline-none focus:border-[var(--aparu-orange)]"
             />
             <button
@@ -61,11 +58,6 @@ export default function AdminOrdersPage() {
               {loading ? "Загружаем..." : "Открыть заказы"}
             </button>
           </form>
-
-          <p className="mt-3 text-xs text-[var(--aparu-muted)]">
-            Ключ по умолчанию: <span className="font-semibold text-[var(--aparu-ink)]">aparu-admin</span>.
-            Для production лучше заменить через `ADMIN_DASHBOARD_KEY`.
-          </p>
 
           {error ? (
             <div className="mt-4 rounded-[18px] bg-[#FFF1F1] px-4 py-3 text-sm text-[#C0392B]">
@@ -93,7 +85,7 @@ export default function AdminOrdersPage() {
                 {orders.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-4 py-8 text-center text-sm text-[var(--aparu-muted)]">
-                      Пока ничего не загружено. Введите ключ и откройте список заказов.
+                      Нет заказов
                     </td>
                   </tr>
                 ) : (

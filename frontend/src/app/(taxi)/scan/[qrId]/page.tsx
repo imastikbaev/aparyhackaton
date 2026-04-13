@@ -43,8 +43,10 @@ export default function ScanPage() {
   const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
   const [selectionMode, setSelectionMode] = useState<"pickup" | "destination" | null>(null);
   const [pickingLoading, setPickingLoading] = useState(false);
+  const [mapCollapsed, setMapCollapsed] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
 
   const rebuildRoute = useCallback(
     async (
@@ -279,6 +281,12 @@ export default function ScanPage() {
     }
   };
 
+  const handleSheetScroll = () => {
+    if (selectionMode) return;
+    const nextCollapsed = (sheetRef.current?.scrollTop ?? 0) > 32;
+    setMapCollapsed((prev) => (prev === nextCollapsed ? prev : nextCollapsed));
+  };
+
   const nearbyIcons: Record<NearbyPlaceCategory, typeof Building2> = {
     mall: Building2,
     pharmacy: Pill,
@@ -378,7 +386,11 @@ export default function ScanPage() {
   return (
     <div className="flex h-screen max-w-[430px] mx-auto flex-col overflow-hidden">
       {/* Карта (верхняя часть) */}
-      <div className="relative z-0 flex-1 min-h-0">
+      <div
+        className={`relative z-0 shrink-0 overflow-hidden transition-[height] duration-300 ease-out ${
+          selectionMode ? "h-[46vh]" : mapCollapsed ? "h-[180px]" : "h-[52vh]"
+        }`}
+      >
         <LeafletMap
           center={mapCenter ?? [qrPoint.latitude, qrPoint.longitude]}
           zoom={15}
@@ -440,7 +452,11 @@ export default function ScanPage() {
       </div>
 
       {/* Bottom Sheet */}
-      <div className="relative z-[1100] -mt-6 flex max-h-[48vh] flex-col gap-2 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-5 pb-5 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
+      <div
+        ref={sheetRef}
+        onScroll={handleSheetScroll}
+        className="relative z-[1100] -mt-6 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-5 pb-5 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]"
+      >
         {/* Drag handle */}
         <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-[#d6dee2]" />
 
