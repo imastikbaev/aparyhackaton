@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Car, Flag, MapPinned, MessageCircleMore, Send, Share2, Ticket, XCircle } from "lucide-react";
 import { DriverCard } from "@/components/order/DriverCard";
 import { OfflineTicketCard } from "@/components/order/OfflineTicketCard";
@@ -28,6 +28,8 @@ export default function OrderPage() {
   const [shareState, setShareState] = useState<"idle" | "copied">("idle");
   const [cancelLoading, setCancelLoading] = useState(false);
   const [showOfflineTicket, setShowOfflineTicket] = useState(false);
+  const [mapCollapsed, setMapCollapsed] = useState(false);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
 
   useOrderStatus(Number(orderId));
 
@@ -144,10 +146,19 @@ export default function OrderPage() {
     }
   };
 
+  const handleSheetScroll = () => {
+    const nextCollapsed = (sheetRef.current?.scrollTop ?? 0) > 32;
+    setMapCollapsed((prev) => (prev === nextCollapsed ? prev : nextCollapsed));
+  };
+
   return (
     <div className="flex h-screen max-w-[430px] mx-auto flex-col overflow-hidden">
       {/* Карта */}
-      <div className="flex-1 min-h-0">
+      <div
+        className={`shrink-0 overflow-hidden transition-[height] duration-300 ease-out ${
+          mapCollapsed ? "h-[180px]" : "h-[46vh]"
+        }`}
+      >
         <LeafletMap
           center={[currentOrder.pickup_lat, currentOrder.pickup_lon]}
           zoom={14}
@@ -157,8 +168,17 @@ export default function OrderPage() {
       </div>
 
       {/* Bottom sheet */}
-      <div className="-mt-6 flex max-h-[60vh] flex-col gap-3 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-5 pb-6 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]">
-        <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-[#d6dee2]" />
+      <div
+        ref={sheetRef}
+        onScroll={handleSheetScroll}
+        className="-mt-6 flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-t-[32px] bg-white px-4 pt-5 pb-6 shadow-[0_-14px_40px_rgba(24,39,75,0.12)]"
+      >
+        <div className="sticky top-0 z-10 -mx-4 -mt-5 bg-white px-4 pt-5 pb-3">
+          <div className="mx-auto mb-1 h-1 w-10 rounded-full bg-[#d6dee2]" />
+          <p className="text-center text-[11px] font-medium uppercase tracking-[0.12em] text-[var(--aparu-muted)]">
+            {mapCollapsed ? "Потяни вверх, чтобы раскрыть карту" : "Прокрути вниз, чтобы свернуть карту"}
+          </p>
+        </div>
 
         <OrderStatusBar status={currentOrder.status} />
 
